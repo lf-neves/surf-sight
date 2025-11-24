@@ -4,7 +4,9 @@
   "private": true,
   "description": "SurfSight monorepo - web app and microservices",
   "scripts": {
-    "dev": "pnpm --filter web-app dev",
+    "dev": "pnpm --parallel --filter web-app --filter @surf-sight/api-service dev",
+    "dev:web": "pnpm --filter web-app dev",
+    "dev:api": "pnpm --filter @surf-sight/api-service dev",
     "build": "pnpm --filter web-app build",
     "start": "pnpm --filter web-app start",
     "lint": "pnpm -r lint",

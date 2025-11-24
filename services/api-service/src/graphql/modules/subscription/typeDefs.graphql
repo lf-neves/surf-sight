@@ -1,0 +1,5 @@
+# Subscription root type
+type Subscription {
+  _empty: String
+}
+

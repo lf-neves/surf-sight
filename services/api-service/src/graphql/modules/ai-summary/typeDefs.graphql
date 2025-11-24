@@ -1,0 +1,39 @@
+type AISummary {
+  id: ID!
+  forecastId: ID!
+  spotId: ID!
+  summary: String!
+  structured: JSON!
+  modelInfo: JSON!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  forecast: Forecast!
+  spot: Spot!
+}
+
+type AIInsights {
+  conditions: String!
+  skillLevel: String!
+  recommendations: [String!]!
+  risks: [String!]!
+  rating: Int!
+}
+
+extend type Query {
+  aiSummary(id: ID!): AISummary
+  latestAISummary(spotId: ID!, timestamp: DateTime): AISummary
+}
+
+extend type Mutation {
+  createAISummary(input: CreateAISummaryInput!): AISummary!
+  deleteAISummary(id: ID!): Boolean!
+}
+
+input CreateAISummaryInput {
+  forecastId: ID!
+  spotId: ID!
+  summary: String!
+  structured: JSON
+  modelInfo: JSON
+}
+

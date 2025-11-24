@@ -1,0 +1,44 @@
+type User {
+  id: ID!
+  email: String!
+  name: String
+  phone: String
+  skillLevel: UserSkillLevel
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  favorites: [FavoriteSpot!]!
+}
+
+enum UserSkillLevel {
+  beginner
+  intermediate
+  advanced
+}
+
+extend type Query {
+  users: [User!]!
+  user(id: ID!): User
+  userByEmail(email: String!): User
+  me: User
+}
+
+extend type Mutation {
+  createUser(input: CreateUserInput!): User!
+  updateUser(id: ID!, input: UpdateUserInput!): User!
+  deleteUser(id: ID!): Boolean!
+}
+
+input CreateUserInput {
+  email: String!
+  name: String
+  phone: String
+  skillLevel: UserSkillLevel
+}
+
+input UpdateUserInput {
+  email: String
+  name: String
+  phone: String
+  skillLevel: UserSkillLevel
+}
+

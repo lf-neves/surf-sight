@@ -1,0 +1,25 @@
+type FavoriteSpot {
+  userId: ID!
+  spotId: ID!
+  notifyWhatsapp: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  user: User!
+  spot: Spot!
+}
+
+extend type Query {
+  favorites: [FavoriteSpot!]!
+  isFavorite(spotId: ID!): Boolean!
+}
+
+extend type Mutation {
+  addFavorite(spotId: ID!, notifyWhatsapp: Boolean): FavoriteSpot!
+  removeFavorite(spotId: ID!): Boolean!
+  updateFavorite(spotId: ID!, notifyWhatsapp: Boolean!): FavoriteSpot!
+}
+
+extend type Subscription {
+  favoriteUpdated: FavoriteSpot!
+}
+

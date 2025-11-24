@@ -1,0 +1,40 @@
+type Forecast {
+  id: ID!
+  spotId: ID!
+  timestamp: DateTime!
+  raw: JSON!
+  source: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  spot: Spot!
+  summaries: [AISummary!]!
+}
+
+extend type Query {
+  forecast(id: ID!): Forecast
+  forecastsForSpot(spotId: ID!, nextHours: Int): [Forecast!]!
+}
+
+extend type Mutation {
+  createForecast(input: CreateForecastInput!): Forecast!
+  updateForecast(id: ID!, input: UpdateForecastInput!): Forecast!
+  deleteForecast(id: ID!): Boolean!
+}
+
+extend type Subscription {
+  forecastUpdated(spotId: ID!): Forecast!
+}
+
+input CreateForecastInput {
+  spotId: ID!
+  timestamp: DateTime!
+  raw: JSON!
+  source: String
+}
+
+input UpdateForecastInput {
+  timestamp: DateTime
+  raw: JSON
+  source: String
+}
+

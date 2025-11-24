@@ -1,0 +1,26 @@
+overwrite: true
+schema:
+  - './src/graphql/modules/**/*.graphql'
+generates:
+  src/graphql/generated/types.ts:
+    documents: null
+    plugins:
+      - 'typescript'
+      - 'typescript-resolvers'
+    config:
+      useIndexSignature: true
+      contextType: '../context#GraphQLContext'
+      mappers:
+        User: '@prisma/client#User'
+        Spot: '@prisma/client#Spot'
+        Forecast: '@prisma/client#Forecast'
+        AISummary: '@prisma/client#AISummary'
+        FavoriteSpot: '@prisma/client#FavoriteSpot'
+      scalars:
+        DateTime: string
+        JSON: any
+      namingConvention:
+        typeNames: 'pascal-case#pascalCase'
+        enumValues: 'keep'
+      typesPrefix: 'Graphql'
+

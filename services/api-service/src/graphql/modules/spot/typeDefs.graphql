@@ -1,0 +1,53 @@
+type Spot {
+  id: ID!
+  name: String!
+  slug: String!
+  lat: Float!
+  lon: Float!
+  type: SpotType!
+  meta: JSON
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  forecast(nextHours: Int = 24): [Forecast!]!
+  aiSummary(timestamp: DateTime): AISummary
+  aiInsights(timestamp: DateTime): AIInsights
+}
+
+enum SpotType {
+  beach
+  reef
+  point
+  other
+}
+
+extend type Query {
+  spots: [Spot!]!
+  spot(id: ID!): Spot
+  spotBySlug(slug: String!): Spot
+  searchSpots(query: String!): [Spot!]!
+}
+
+extend type Mutation {
+  createSpot(input: CreateSpotInput!): Spot!
+  updateSpot(id: ID!, input: UpdateSpotInput!): Spot!
+  deleteSpot(id: ID!): Boolean!
+}
+
+input CreateSpotInput {
+  name: String!
+  slug: String!
+  lat: Float!
+  lon: Float!
+  type: SpotType!
+  meta: JSON
+}
+
+input UpdateSpotInput {
+  name: String
+  slug: String
+  lat: Float
+  lon: Float
+  type: SpotType
+  meta: JSON
+}
+
