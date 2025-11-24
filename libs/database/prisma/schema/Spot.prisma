@@ -1,0 +1,26 @@
+enum SpotType {
+    beach
+    reef
+    point
+    other
+}
+
+model Spot {
+    spotId    String   @id @default(uuid()) @db.Uuid
+    name      String
+    slug      String   @unique
+    lat       Float
+    lon       Float
+    type      SpotType
+    meta      Json?    @default("{}")
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    forecasts Forecast[]
+    summaries AISummary[]
+    favorites FavoriteSpot[]
+
+    @@index([slug])
+    @@index([lat, lon])
+    @@map("spots")
+}

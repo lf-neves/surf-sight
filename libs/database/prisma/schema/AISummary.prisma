@@ -1,0 +1,19 @@
+model AISummary {
+  aiSummaryId String   @id @default(uuid()) @db.Uuid
+  forecastId  String   @db.Uuid
+  spotId      String   @db.Uuid
+  summary     String
+  structured  Json     @default("{}")
+  modelInfo   Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  forecast    Forecast @relation(fields: [forecastId], references: [forecastId], onDelete: Cascade)
+  spot        Spot     @relation(fields: [spotId], references: [spotId], onDelete: Cascade)
+
+  @@map("ai_summaries")
+  @@index([spotId])
+  @@index([forecastId])
+  @@index([createdAt])
+}
+

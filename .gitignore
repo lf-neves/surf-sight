@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+**/node_modules
 /.pnp
 .pnp.js
 .yarn/install-state.gz
@@ -12,6 +13,8 @@
 # next.js
 /.next/
 /out/
+**/.next/
+**/out/
 
 # production
 /build
@@ -30,6 +33,7 @@ lerna-debug.log*
 # local env files
 .env*.local
 .env
+!.env.example
 
 # vercel
 .vercel
@@ -37,6 +41,8 @@ lerna-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+**/dist/
+**/*.tsbuildinfo
 
 # IDE
 .vscode/
