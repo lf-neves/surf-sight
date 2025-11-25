@@ -1,5 +1,3 @@
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 import { SearchBar } from "./components/SearchBar";
 import { HeroSection } from "./components/HeroSection";
 import { WaveVisualization } from "./components/WaveVisualization";
@@ -15,10 +13,7 @@ import { EducationPanel } from "./components/EducationPanel";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
-      <Header />
-
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Search Bar */}
         <SearchBar />
 
@@ -54,9 +49,6 @@ export default function Home() {
 
         {/* Education Panel */}
         <EducationPanel />
-      </main>
-
-      <Footer />
     </div>
   );
 }

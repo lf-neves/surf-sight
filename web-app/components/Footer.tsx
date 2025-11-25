@@ -1,3 +1,8 @@
+"use client";
+
+import Link from 'next/link';
+import { Separator } from '@/components/ui/separator';
+
 export function Footer() {
   return (
     <footer className="bg-white border-t border-gray-100 mt-16">
@@ -5,18 +10,30 @@ export function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Links */}
           <nav className="flex items-center gap-6">
-            <a href="#" className="text-sm text-gray-600 hover:text-cyan-600 transition-colors">
+            <Link 
+              href="/about" 
+              className="text-sm text-gray-600 hover:text-cyan-600 transition-colors"
+            >
               Sobre
-            </a>
-            <a href="#" className="text-sm text-gray-600 hover:text-cyan-600 transition-colors">
+            </Link>
+            <Link 
+              href="/spots" 
+              className="text-sm text-gray-600 hover:text-cyan-600 transition-colors"
+            >
               Picos
-            </a>
-            <a href="#" className="text-sm text-gray-600 hover:text-cyan-600 transition-colors">
+            </Link>
+            <Link 
+              href="/terms" 
+              className="text-sm text-gray-600 hover:text-cyan-600 transition-colors"
+            >
               Termos
-            </a>
-            <a href="#" className="text-sm text-gray-600 hover:text-cyan-600 transition-colors">
+            </Link>
+            <Link 
+              href="/privacy" 
+              className="text-sm text-gray-600 hover:text-cyan-600 transition-colors"
+            >
               Privacidade
-            </a>
+            </Link>
           </nav>
 
           {/* Data Sources */}
@@ -26,8 +43,9 @@ export function Footer() {
         </div>
 
         {/* Copyright */}
-        <div className="text-center mt-6 pt-6 border-t border-gray-100">
-          <p className="text-xs text-gray-500">
+        <div className="mt-6 pt-6">
+          <Separator className="mb-6" />
+          <p className="text-center text-xs text-gray-500">
             © 2025 SurfSight. Ajudando surfistas a ler o mar com confiança.
           </p>
         </div>

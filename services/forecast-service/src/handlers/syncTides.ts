@@ -1,6 +1,6 @@
 import { fetchAllSpots } from "../lib/httpClient";
 import { sendMessagesBatch, TideSyncMessage } from "../lib/sqsClient";
-import { logger } from "@surf-sight/core";
+import { HttpStatusCode, logger } from "@surf-sight/core";
 
 interface EnvironmentVariables {
   SPOT_SERVICE_URL: string;
@@ -39,7 +39,7 @@ export async function handler(): Promise<{
     if (spots.length === 0) {
       logger.info("No spots found, skipping sync.");
       return {
-        statusCode: 200,
+        statusCode: HttpStatusCode.OK,
         body: JSON.stringify({ message: "No spots to sync" }),
       };
     }
@@ -77,7 +77,7 @@ export async function handler(): Promise<{
     });
 
     return {
-      statusCode: 200,
+      statusCode: HttpStatusCode.OK,
       body: JSON.stringify({
         message: "Tide sync completed",
         spotsProcessed: messages.length,
@@ -97,7 +97,7 @@ export async function handler(): Promise<{
 
     // Return error response but don't throw - let AWS retries handle it
     return {
-      statusCode: 500,
+      statusCode: HttpStatusCode.INTERNAL_SERVER_ERROR,
       body: JSON.stringify({
         error: "Tide sync job failed.",
         message: errorMessage,

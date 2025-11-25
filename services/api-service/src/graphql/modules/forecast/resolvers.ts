@@ -3,9 +3,8 @@ import {
   GraphqlQueryResolvers,
   GraphqlMutationResolvers,
   GraphqlSubscriptionResolvers,
-} from '../../generated/types';
-import { GraphQLContext } from '../../../context';
-import { FORECAST_UPDATED } from '../subscription/events';
+} from "../../generated/types";
+import { FORECAST_UPDATED } from "../subscription/events";
 
 export const forecastResolvers: GraphqlForecastResolvers = {
   id: (parent) => parent.forecastId,
@@ -21,7 +20,7 @@ export const forecastResolvers: GraphqlForecastResolvers = {
         forecastId: parent.forecastId,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
   },
@@ -61,7 +60,9 @@ export const forecastMutationResolvers: GraphqlMutationResolvers = {
     const forecast = await context.prisma.forecast.update({
       where: { forecastId: args.id },
       data: {
-        ...(args.input.timestamp && { timestamp: new Date(args.input.timestamp) }),
+        ...(args.input.timestamp && {
+          timestamp: new Date(args.input.timestamp),
+        }),
         ...(args.input.raw && { raw: args.input.raw }),
         ...(args.input.source && { source: args.input.source }),
       },
@@ -91,4 +92,3 @@ export const forecastSubscriptionResolvers: GraphqlSubscriptionResolvers = {
     },
   },
 };
-

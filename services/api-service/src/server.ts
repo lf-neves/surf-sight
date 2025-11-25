@@ -9,6 +9,7 @@ import cors from "cors";
 import { schema } from "./graphql/schema";
 import { createContext, getUserFromRequest } from "./context";
 import { env } from "./env";
+import { logger } from "@surf-sight/core";
 
 let serverCleanup: ReturnType<typeof useServer> | null = null;
 
@@ -72,6 +73,7 @@ export async function createServer(): Promise<{
         const user = getUserFromRequest(
           req.headers as Record<string, string | string[] | undefined>
         );
+
         return createContext(user);
       },
     })
@@ -89,8 +91,8 @@ export async function startServer() {
   const { httpServer } = await createServer();
 
   httpServer.listen(env.port, () => {
-    console.log(`🚀 Server ready at http://localhost:${env.port}/graphql`);
-    console.log(
+    logger.info(`🚀 Server ready at http://localhost:${env.port}/graphql`);
+    logger.info(
       `📡 WebSocket server ready at ws://localhost:${env.port}/graphql`
     );
   });
