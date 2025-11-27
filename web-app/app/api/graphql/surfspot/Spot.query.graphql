@@ -1,0 +1,6 @@
+query Spot($id: ID!) {
+  spot(id: $id) {
+    id
+    name
+  }
+}

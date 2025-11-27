@@ -66,7 +66,10 @@ export async function createServer(): Promise<{
   // Set up GraphQL endpoint
   app.use(
     "/graphql",
-    cors<cors.CorsRequest>(),
+    cors<cors.CorsRequest>({
+      origin: "http://localhost:3000",
+      credentials: true,
+    }),
     express.json(),
     expressMiddleware(server, {
       context: async ({ req }) => {

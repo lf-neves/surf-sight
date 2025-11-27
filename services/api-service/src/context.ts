@@ -62,18 +62,20 @@ export function createContext(user: User | null = null): GraphQLContext {
 }
 
 // Helper function to extract user from request headers
-export function getUserFromRequest(headers: Record<string, string | string[] | undefined>): User | null {
+export function getUserFromRequest(
+  headers: Record<string, string | string[] | undefined>
+): User | null {
   // TODO: Implement JWT decoding
   // For now, return null (no auth)
   const authHeader = headers.authorization || headers.Authorization;
-  
-  if (!authHeader || typeof authHeader !== 'string') {
+
+  if (!authHeader || typeof authHeader !== "string") {
     return null;
   }
 
   // Simple token extraction (Bearer token)
-  const token = authHeader.replace('Bearer ', '');
-  
+  const token = authHeader.replace("Bearer ", "");
+
   if (!token) {
     return null;
   }
@@ -82,4 +84,3 @@ export function getUserFromRequest(headers: Record<string, string | string[] | u
   // For now, return null
   return null;
 }
-

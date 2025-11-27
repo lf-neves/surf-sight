@@ -1,6 +1,6 @@
-import { Waves, Bell, Settings, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { Waves, Bell, Settings, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export function Header() {
   return (
@@ -12,31 +12,33 @@ export function Header() {
             <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center">
               <Waves className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-semibold text-gray-900">SurfSight</span>
+            <span className="text-xl font-semibold text-gray-900">
+              SurfSight
+            </span>
           </Link>
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link 
-              href="/spots" 
+            <Link
+              href="/spots"
               className="text-sm font-medium text-gray-700 hover:text-cyan-600 transition-colors"
             >
               Picos
             </Link>
-            <Link 
-              href="/forecast" 
+            <Link
+              href="/forecast"
               className="text-sm font-medium text-gray-700 hover:text-cyan-600 transition-colors"
             >
               Previsão
             </Link>
-            <Link 
-              href="/alerts" 
+            <Link
+              href="/alerts"
               className="text-sm font-medium text-gray-700 hover:text-cyan-600 transition-colors"
             >
               Alertas
             </Link>
-            <Link 
-              href="/sessions" 
+            <Link
+              href="/sessions"
               className="text-sm font-medium text-gray-700 hover:text-cyan-600 transition-colors"
             >
               Minhas Sessões
@@ -51,9 +53,9 @@ export function Header() {
             <Button variant="ghost" size="icon" aria-label="Settings">
               <Settings className="h-5 w-5" />
             </Button>
-            <Button 
-              variant="default" 
-              size="icon" 
+            <Button
+              variant="default"
+              size="icon"
               className="bg-gradient-to-br from-cyan-400 to-blue-500 hover:shadow-lg transition-shadow"
               aria-label="User profile"
             >
