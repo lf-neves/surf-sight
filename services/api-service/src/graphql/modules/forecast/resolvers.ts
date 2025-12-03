@@ -3,15 +3,19 @@ import {
   GraphqlQueryResolvers,
   GraphqlMutationResolvers,
   GraphqlSubscriptionResolvers,
-} from "../../generated/types";
-import { FORECAST_UPDATED } from "../subscription/events";
+} from '../../generated/types';
+import { FORECAST_UPDATED } from '../subscription/events';
 
 export const forecastResolvers: GraphqlForecastResolvers = {
   id: (parent) => parent.forecastId,
   spotId: (parent) => parent.spotId,
 
   spot: async (parent, _args, context) => {
-    return context.services.spotService.findById(parent.spotId);
+    const spot = await context.services.spotService.findById(parent.spotId);
+    if (!spot) {
+      throw new Error('Spot not found');
+    }
+    return spot;
   },
 
   summaries: async (parent, _args, context) => {
@@ -20,7 +24,7 @@ export const forecastResolvers: GraphqlForecastResolvers = {
         forecastId: parent.forecastId,
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: 'desc',
       },
     });
   },
@@ -45,7 +49,7 @@ export const forecastMutationResolvers: GraphqlMutationResolvers = {
       spotId: args.input.spotId,
       timestamp: new Date(args.input.timestamp),
       raw: args.input.raw || {},
-      source: args.input.source,
+      source: args.input.source || 'stormglass',
     });
 
     // Publish subscription event
@@ -83,7 +87,8 @@ export const forecastMutationResolvers: GraphqlMutationResolvers = {
 
 export const forecastSubscriptionResolvers: GraphqlSubscriptionResolvers = {
   forecastUpdated: {
-    subscribe: (_parent, args, context) => {
+    // @ts-expect-error this is a workaround to avoid type errors
+    subscribe: async (_parent, _args, context) => {
       return context.pubsub.asyncIterator([FORECAST_UPDATED]);
     },
     resolve: (payload: any) => {

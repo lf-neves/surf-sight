@@ -1,11 +1,11 @@
-import { prisma } from '../src/client';
+import { prismaClient } from '../src/client';
 import { SpotType } from '@prisma/client';
 
 async function main() {
   console.log('🌱 Starting database seed...');
 
   // Create example spot
-  const exampleSpot = await prisma.spot.upsert({
+  const exampleSpot = await prismaClient.spot.upsert({
     where: { slug: 'arpoador-rio' },
     update: {},
     create: {
@@ -26,7 +26,7 @@ async function main() {
   console.log('✅ Created example spot:', exampleSpot.name);
 
   // Create example user
-  const exampleUser = await prisma.user.upsert({
+  const exampleUser = await prismaClient.user.upsert({
     where: { email: 'surfer@example.com' },
     update: {},
     create: {
@@ -40,7 +40,7 @@ async function main() {
   console.log('✅ Created example user:', exampleUser.email);
 
   // Add spot to user's favorites
-  await prisma.favoriteSpot.upsert({
+  await prismaClient.favoriteSpot.upsert({
     where: {
       userId_spotId: {
         userId: exampleUser.userId,
@@ -66,6 +66,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await prismaClient.$disconnect();
   });
-

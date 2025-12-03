@@ -1,21 +1,34 @@
 import {
-  GraphqlAISummaryResolvers,
+  GraphqlAiSummaryResolvers,
   GraphqlQueryResolvers,
   GraphqlMutationResolvers,
-} from "../../generated/types";
-import { GraphQLContext } from "../../../context";
+} from '../../generated/types';
 
-export const aiResolvers: GraphqlAISummaryResolvers = {
+export const aiResolvers: GraphqlAiSummaryResolvers = {
   id: (parent) => parent.aiSummaryId,
   forecastId: (parent) => parent.forecastId,
   spotId: (parent) => parent.spotId,
 
   forecast: async (parent, _args, context) => {
-    return context.services.forecastService.findById(parent.forecastId);
+    const forecast = await context.services.forecastService.findById(
+      parent.forecastId
+    );
+
+    if (!forecast) {
+      throw new Error('Forecast not found');
+    }
+
+    return forecast;
   },
 
   spot: async (parent, _args, context) => {
-    return context.services.spotService.findById(parent.spotId);
+    const spot = await context.services.spotService.findById(parent.spotId);
+
+    if (!spot) {
+      throw new Error('Spot not found');
+    }
+
+    return spot;
   },
 };
 
@@ -48,4 +61,3 @@ export const aiMutationResolvers: GraphqlMutationResolvers = {
     return true;
   },
 };
-

@@ -1,28 +1,8 @@
 import type { Context, Handler } from 'aws-lambda';
 
+import { AWS } from '../modular-aws-sdk';
 import { logger } from '../logger';
 import { syntheticUuid, uuid } from '../uuid';
-
-// AWS SDK import - will be mocked in tests
-let AWS: any;
-try {
-  // Try to import AWS SDK v2 (aws-sdk) or v3 (@aws-sdk/client-sqs)
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  AWS = require('aws-sdk');
-} catch {
-  // If aws-sdk is not available, create a mock for test environments
-  AWS = {
-    SQS: class {
-      sendMessage() {
-        return {
-          promise: async () => ({
-            MessageId: 'mock-message-id',
-          }),
-        };
-      }
-    },
-  };
-}
 
 const sqs = new AWS.SQS();
 

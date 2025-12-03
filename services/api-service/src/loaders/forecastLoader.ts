@@ -1,5 +1,5 @@
-import DataLoader from "dataloader";
-import { Forecast, PrismaClient } from "@prisma/client";
+import DataLoader from 'dataloader';
+import { Forecast, PrismaClient } from '@prisma/client';
 
 type ForecastKey = {
   spotId: string;
@@ -25,7 +25,7 @@ export function createForecastLoader(prisma: PrismaClient) {
           spotId: { in: spotIds },
         },
         orderBy: {
-          timestamp: "asc",
+          timestamp: 'asc',
         },
       });
 
@@ -51,7 +51,10 @@ export function createForecastLoader(prisma: PrismaClient) {
       });
     },
     {
-      cacheKeyFn: (key) => `${key.spotId}:${key.hours || "all"}`,
+      cacheKeyFn: (key: ForecastKey) => ({
+        spotId: key.spotId,
+        hours: key.hours,
+      }),
     }
   );
 }

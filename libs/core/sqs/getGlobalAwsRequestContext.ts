@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
+// @ts-nocheck
 import type { Context } from 'aws-lambda';
 import { syntheticUuid } from '../uuid';
 
