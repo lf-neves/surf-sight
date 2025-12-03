@@ -1,4 +1,4 @@
-name: PR Checks
+name: Workflow
 
 on:
   pull_request:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   lint:
-    name: Lint
+    name: lint
     runs-on: ubuntu-latest
 
     steps:
@@ -17,7 +17,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 8.15.0
+          version: 9
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -32,7 +32,7 @@ jobs:
         run: pnpm lint
 
   type-check:
-    name: Type Check
+    name: type-check
     runs-on: ubuntu-latest
 
     steps:
@@ -42,7 +42,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 8.15.0
+          version: 9
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
