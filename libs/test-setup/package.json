@@ -1,0 +1,15 @@
+{
+  "name": "@surf-sight/test-setup",
+  "version": "1.0.0",
+  "description": "Test setup utilities for SurfSight monorepo",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@surf-sight/database": "workspace:*",
+    "@faker-js/faker": "^9.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/jest": "^29.5.14"
+  }
+}

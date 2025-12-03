@@ -44,6 +44,13 @@ next-env.d.ts
 **/dist/
 **/*.tsbuildinfo
 
+# logs
+*.log
+**/*.log
+
+# coverage
+**/coverage/
+
 # IDE
 .vscode/
 .idea/

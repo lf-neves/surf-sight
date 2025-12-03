@@ -7,8 +7,10 @@
   "scripts": {
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
+    "db:migrate:rollback": "prisma migrate reset --force",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:spots": "tsx src/seeders/spots.seeder.ts",
     "db:generate": "prisma generate",
     "db:format": "prisma format",
     "lint": "eslint .",
@@ -18,7 +20,8 @@
     "schema": "./prisma/schema"
   },
   "dependencies": {
-    "@prisma/client": "^6.7.0"
+    "@prisma/client": "^6.7.0",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

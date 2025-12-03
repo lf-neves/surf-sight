@@ -23,13 +23,18 @@
   },
   "packageManager": "pnpm@8.15.0",
   "devDependencies": {
-    "@types/node": "^22.10.2",
-    "@types/pg": "^8.15.6"
+    "@types/node": "^22.13.5",
+    "@types/jest": "^29.5.14",
+    "@types/pg": "^8.15.6",
+    "aws-lambda": "^1.0.7",
+    "typescript": "^5.7.3"
   },
   "dependencies": {
     "@apollo/react-hooks": "^4.0.0",
     "apollo-boost": "^0.4.9",
     "dotenv": "^17.2.3",
-    "graphql": "^16.8.1"
+    "graphql": "^16.8.1",
+    "jest": "^29.7.0",
+    "@surf-sight/database": "workspace:*"
   }
 }

@@ -1,0 +1,60 @@
+service: forecast-service
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  # Defaults to 'development' if not provided via CLI option
+  stage: ${opt:stage, 'development'}
+  # Defaults to 'us-east-1' if AWS_REGION env var not set
+  region: ${env:AWS_REGION, 'us-east-1'}
+  environment:
+    # Replace placeholder with actual queue URL
+    SQS_QUEUE_URL: ${env:SQS_QUEUE_URL, 'PLACEHOLDER_SQS_QUEUE_URL'}
+
+functions:
+  enqueueForecasts:
+    # Replace PLACEHOLDER_HANDLER_PATH with actual path (e.g., dist/handlers/handleEnqueueRetrievedForecastsToProcess)
+    handler: PLACEHOLDER_HANDLER_PATH.handleEnqueueRetrievedForecastsToProcess
+    events:
+      # Replace with event type (e.g., schedule: rate(1 hour) or http: { path: /forecasts, method: get })
+      - PLACEHOLDER_EVENT_TYPE: PLACEHOLDER_EVENT_VALUE
+
+  processSqsMessage:
+    # Replace PLACEHOLDER_HANDLER_PATH with actual path (e.g., dist/handlers/handleSqsMessage)
+    handler: PLACEHOLDER_HANDLER_PATH.handleSqsMessage
+    # DLQ for failed Lambda invocations (async errors)
+    deadLetter:
+      targetArn:
+        Fn::GetAtt:
+          - ForecastServiceDLQ
+          - Arn
+    events:
+      - sqs:
+          # Replace placeholder with actual queue ARN or use env var
+          arn: ${env:SQS_QUEUE_ARN, 'PLACEHOLDER_SQS_QUEUE_ARN'}
+          # Note: Configure source queue's redrive policy separately to send messages to DLQ after maxReceiveCount failures
+          batchSize: ${env:SQS_BATCH_SIZE, 10}
+
+resources:
+  Resources:
+    ForecastServiceDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-dlq
+        MessageRetentionPeriod: 1209600 # 14 days
+        ReceiveMessageWaitTimeSeconds: 0
+  Outputs:
+    ForecastServiceDLQArn:
+      Description: ARN of the Dead Letter Queue
+      Value:
+        Fn::GetAtt:
+          - ForecastServiceDLQ
+          - Arn
+      Export:
+        Name: ${self:service}-${self:provider.stage}-dlq-arn
+    ForecastServiceDLQUrl:
+      Description: URL of the Dead Letter Queue
+      Value:
+        Ref: ForecastServiceDLQ
+      Export:
+        Name: ${self:service}-${self:provider.stage}-dlq-url

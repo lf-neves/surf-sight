@@ -1,0 +1,22 @@
+{
+  "name": "forecast-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "dependencies": {
+    "@surf-sight/core": "workspace:*",
+    "@surf-sight/database": "workspace:*",
+    "@surf-sight/test-setup": "workspace:*"
+  },
+  "devDependencies": {
+    "ts-jest": "^29.2.5"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
