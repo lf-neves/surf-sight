@@ -355,7 +355,7 @@ export async function seedSpots() {
         where: { slug: spotData.slug },
       });
 
-      const result = await prismaClient.spot.upsert({
+      await prismaClient.spot.upsert({
         where: { slug: spotData.slug },
         update: {
           name: spotData.name,

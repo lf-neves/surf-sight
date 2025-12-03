@@ -3,11 +3,10 @@ import {
   GraphqlQueryResolvers,
   GraphqlMutationResolvers,
 } from '../../generated/types';
-import { GraphQLContext } from '../../../context';
 
 export const spotResolvers: GraphqlSpotResolvers = {
   id: (parent) => parent.spotId,
-  
+
   forecast: async (parent, args, context) => {
     return context.services.forecastService.findForSpot(
       parent.spotId,
@@ -19,7 +18,7 @@ export const spotResolvers: GraphqlSpotResolvers = {
     if (args.timestamp) {
       return context.loaders.summaryLoader.load({
         spotId: parent.spotId,
-        timestamp: args.timestamp,
+        timestamp: args.timestamp ? new Date(args.timestamp) : undefined,
       });
     }
     return context.loaders.summaryLoader.load({
@@ -30,7 +29,7 @@ export const spotResolvers: GraphqlSpotResolvers = {
   aiInsights: async (parent, args, context) => {
     return context.services.aiSummaryService.getLatestInsights(
       parent.spotId,
-      args.timestamp || undefined
+      args.timestamp ? new Date(args.timestamp) : undefined
     );
   },
 };
@@ -59,7 +58,14 @@ export const spotMutationResolvers: Partial<GraphqlMutationResolvers> = {
   },
 
   updateSpot: async (_parent, args, context) => {
-    return context.services.spotService.update(args.id, args.input);
+    return context.services.spotService.update(args.id, {
+      name: args.input.name || undefined,
+      slug: args.input.slug || undefined,
+      lat: args.input.lat || undefined,
+      lon: args.input.lon || undefined,
+      type: args.input.type || undefined,
+      meta: args.input.meta || undefined,
+    });
   },
 
   deleteSpot: async (_parent, args, context) => {
@@ -67,4 +73,3 @@ export const spotMutationResolvers: Partial<GraphqlMutationResolvers> = {
     return true;
   },
 };
-

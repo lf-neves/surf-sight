@@ -12,8 +12,12 @@
   "license": "ISC",
   "dependencies": {
     "loglevel": "^1.9.2",
-    "p-map": "^6.0.0",
-    "uuid": "^13.0.0"
+    "p-map": "^4.0.0",
+    "uuid": "^13.0.0",
+    "@aws-crypto/client-node": "^4.0.2",
+    "@aws-lambda-powertools/tracer": "^1.18.1",
+    "@aws-sdk/client-bedrock-runtime": "^3.596.0",
+    "aws-sdk": "^2.1666.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.145",

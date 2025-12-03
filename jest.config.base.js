@@ -39,9 +39,7 @@ export const moduleNameMapper = {
   '^@surf-sight/(.*)$': `${libsBasePath}/$1/src`,
 };
 export const setupFilesAfterEnv = [resolve(__dirname, 'jest.setup.ts')];
-export const transformIgnorePatterns = [
-  'node_modules/(?!.*(p-map|uuid))',
-];
+export const transformIgnorePatterns = ['node_modules/(?!.*(p-map|uuid))'];
 export const testPathIgnorePatterns = ['/node_modules/', '/dist/'];
 export const coveragePathIgnorePatterns = [
   '/node_modules/',

@@ -3,13 +3,12 @@ import {
   GraphqlQueryResolvers,
   GraphqlMutationResolvers,
 } from '../../generated/types';
-import { GraphQLContext } from '../../../context';
 
 export const userResolvers: GraphqlUserResolvers = {
   id: (parent) => parent.userId,
 
   favorites: async (parent, _args, context) => {
-    return context.services.favoriteService.findForUser(parent.userId);
+    return context.services.favoriteSpotService.findForUser(parent.userId);
   },
 };
 
@@ -36,11 +35,29 @@ export const userQueryResolvers: GraphqlQueryResolvers = {
 
 export const userMutationResolvers: GraphqlMutationResolvers = {
   createUser: async (_parent, args, context) => {
-    return context.services.userService.create(args.input);
+    if (!args.input) {
+      throw new Error('Input is required');
+    }
+
+    const user = await context.services.userService.create({
+      email: args.input.email,
+    });
+
+    if (!user) {
+      throw new Error('User not created');
+    }
+    return user;
   },
 
   updateUser: async (_parent, args, context) => {
-    return context.services.userService.update(args.id, args.input);
+    const user = await context.services.userService.update(args.id, {
+      email: args.input.email!,
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
   },
 
   deleteUser: async (_parent, args, context) => {
@@ -48,4 +65,3 @@ export const userMutationResolvers: GraphqlMutationResolvers = {
     return true;
   },
 };
-
