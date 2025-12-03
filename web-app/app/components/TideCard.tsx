@@ -6,8 +6,7 @@ import { useState } from 'react';
 
 export function TideCard() {
   const [isHovering, setIsHovering] = useState(false);
-  const currentTime = 12; // 12 PM (noon)
-  
+
   // Mock tide data (height in meters)
   const tideData = [
     { time: 0, height: 1.2, label: '12 AM' },
@@ -22,7 +21,7 @@ export function TideCard() {
   ];
 
   const maxHeight = 2.0;
-  
+
   return (
     <motion.div
       className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all cursor-pointer"
@@ -42,35 +41,67 @@ export function TideCard() {
 
       {/* Tide Curve */}
       <div className="relative h-32 mb-4">
-        <svg className="w-full h-full" viewBox="0 0 400 120" preserveAspectRatio="none">
+        <svg
+          className="w-full h-full"
+          viewBox="0 0 400 120"
+          preserveAspectRatio="none"
+        >
           {/* Grid lines */}
-          <line x1="0" y1="30" x2="400" y2="30" stroke="#E5E7EB" strokeWidth="1" strokeDasharray="4 4" />
-          <line x1="0" y1="60" x2="400" y2="60" stroke="#E5E7EB" strokeWidth="1" strokeDasharray="4 4" />
-          <line x1="0" y1="90" x2="400" y2="90" stroke="#E5E7EB" strokeWidth="1" strokeDasharray="4 4" />
-          
+          <line
+            x1="0"
+            y1="30"
+            x2="400"
+            y2="30"
+            stroke="#E5E7EB"
+            strokeWidth="1"
+            strokeDasharray="4 4"
+          />
+          <line
+            x1="0"
+            y1="60"
+            x2="400"
+            y2="60"
+            stroke="#E5E7EB"
+            strokeWidth="1"
+            strokeDasharray="4 4"
+          />
+          <line
+            x1="0"
+            y1="90"
+            x2="400"
+            y2="90"
+            stroke="#E5E7EB"
+            strokeWidth="1"
+            strokeDasharray="4 4"
+          />
+
           {/* Tide curve path */}
           <motion.path
-            d={`M ${tideData.map((d, i) => {
-              const x = (i / (tideData.length - 1)) * 400;
-              const y = 110 - (d.height / maxHeight) * 100;
-              return `${i === 0 ? 'M' : 'L'} ${x},${y}`;
-            }).join(' ')}`}
+            d={`M ${tideData
+              .map((d, i) => {
+                const x = (i / (tideData.length - 1)) * 400;
+                const y = 110 - (d.height / maxHeight) * 100;
+                return `${i === 0 ? 'M' : 'L'} ${x},${y}`;
+              })
+              .join(' ')}`}
             fill="none"
             stroke="url(#tide-gradient)"
             strokeWidth="3"
             strokeLinecap="round"
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
-            transition={{ duration: 2, ease: "easeInOut" }}
+            transition={{ duration: 2, ease: 'easeInOut' }}
           />
-          
+
           {/* Fill under curve */}
           <motion.path
-            d={`M ${tideData.map((d, i) => {
-              const x = (i / (tideData.length - 1)) * 400;
-              const y = 110 - (d.height / maxHeight) * 100;
-              return `${i === 0 ? 'M' : 'L'} ${x},${y}`;
-            }).join(' ')} L 400,120 L 0,120 Z`}
+            d={`M ${tideData
+              .map((d, i) => {
+                const x = (i / (tideData.length - 1)) * 400;
+                const y = 110 - (d.height / maxHeight) * 100;
+                return `${i === 0 ? 'M' : 'L'} ${x},${y}`;
+              })
+              .join(' ')} L 400,120 L 0,120 Z`}
             fill="url(#tide-fill-gradient)"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -78,22 +109,34 @@ export function TideCard() {
           />
 
           {/* Current time marker */}
-          <line 
-            x1="200" 
-            y1="0" 
-            x2="200" 
-            y2="120" 
-            stroke="#06B6D4" 
-            strokeWidth="2" 
+          <line
+            x1="200"
+            y1="0"
+            x2="200"
+            y2="120"
+            stroke="#06B6D4"
+            strokeWidth="2"
             strokeDasharray="4 4"
           />
-          
+
           <defs>
-            <linearGradient id="tide-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <linearGradient
+              id="tide-gradient"
+              x1="0%"
+              y1="0%"
+              x2="0%"
+              y2="100%"
+            >
               <stop offset="0%" stopColor="#0EA5E9" />
               <stop offset="100%" stopColor="#06B6D4" />
             </linearGradient>
-            <linearGradient id="tide-fill-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <linearGradient
+              id="tide-fill-gradient"
+              x1="0%"
+              y1="0%"
+              x2="0%"
+              y2="100%"
+            >
               <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.2" />
               <stop offset="100%" stopColor="#06B6D4" stopOpacity="0.05" />
             </linearGradient>
@@ -110,7 +153,7 @@ export function TideCard() {
           </div>
           <div className="text-blue-600">1.8m</div>
         </div>
-        
+
         <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
           <div>
             <div className="text-xs text-gray-500">Maré Baixa</div>
@@ -128,7 +171,7 @@ export function TideCard() {
         </div>
       </div>
 
-      <motion.div 
+      <motion.div
         className="mt-4 text-xs text-center"
         animate={isHovering ? { scale: [1, 1.05, 1] } : {}}
         transition={{ duration: 0.5 }}
