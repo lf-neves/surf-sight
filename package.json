@@ -10,6 +10,7 @@
     "build": "pnpm --filter web-app build",
     "start": "pnpm --filter web-app start",
     "lint": "pnpm -r lint",
+    "type-check": "pnpm -r type-check",
     "build:all": "pnpm -r build",
     "db:push": "pnpm --filter @surf-sight/database db:push",
     "db:migrate": "pnpm --filter @surf-sight/database db:migrate",
