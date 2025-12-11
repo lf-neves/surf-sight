@@ -1,0 +1,65 @@
+service: api-service
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  region: us-east-2
+  profile: surf-sight
+  vpc:
+    securityGroupIds:
+      - sg-0c60124c86ca3bc22
+    subnetIds:
+      - subnet-0b9b119c82a00e47c
+      - subnet-0b6424d37c53badef
+
+plugins:
+  - serverless-offline
+
+build:
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    target: node22
+    platform: node
+    format: esm
+    keepNames: true
+    exclude:
+      - '@prisma/client'
+      - '@aws-sdk/*'
+      - '@graphql-tools/*'
+      - '@apollo/server'
+      - '@as-integrations/aws-lambda'
+      - 'graphql-subscriptions'
+    external:
+      - '@prisma/client'
+      - '@aws-sdk/*'
+      - '@graphql-tools/*'
+      - '@apollo/server'
+      - '@as-integrations/aws-lambda'
+      - 'graphql-subscriptions'
+    loader:
+      '.graphql': 'text'
+
+package:
+  individually: true
+  patterns:
+    - '!**'
+    - 'src/graphql/modules/**/*.graphql'
+    - 'node_modules/@prisma/**'
+    - 'node_modules/.prisma/**'
+    - 'node_modules/@graphql-tools/**'
+    - 'node_modules/@apollo/**'
+    - 'node_modules/@as-integrations/**'
+    - 'node_modules/graphql-subscriptions/**'
+
+functions:
+  graphql:
+    handler: src/handler.handler
+    events:
+      - httpApi:
+          path: /graphql
+          method: POST
+      - httpApi:
+          path: /graphql
+          method: GET

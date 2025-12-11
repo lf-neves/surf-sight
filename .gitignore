@@ -61,3 +61,29 @@ next-env.d.ts
 # OS
 .DS_Store
 Thumbs.db
+
+# Serverless Framework
+**/.serverless/
+*.zip
+
+# pnpm
+.pnpm-store/
+.pnpm-debug.log*
+
+# Turborepo
+.turbo/
+
+# Prisma
+**/prisma/generated/
+
+# AWS Lambda / Serverless build artifacts
+**/.aws-sam/
+**/samconfig.toml
+
+# Cache directories
+**/.cache/
+.cache/
+
+# Build artifacts
+**/build/
+**/*.map
