@@ -2,14 +2,8 @@ import { loadFilesSync } from '@graphql-tools/load-files';
 import { mergeTypeDefs } from '@graphql-tools/merge';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { logger } from '@surf-sight/core';
 
-// ESM equivalent of __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Explicitly define scalars to ensure they're always included
 const scalarDefinitions = `
   scalar DateTime
   scalar JSON
@@ -18,15 +12,22 @@ const scalarDefinitions = `
 // Load all typeDefs
 // GraphQL files are included in package via serverless.yaml patterns
 // Try multiple paths to find GraphQL files in different environments
+logger.info('Loading GraphQL typeDefs...');
+logger.info(`Current working directory: ${process.cwd()}`);
+logger.info(`__dirname: ${__dirname}`);
+
 const possiblePaths = [
+  // Lambda package location (most likely in production)
+  // In Lambda, process.cwd() is /var/task, and files are at src/graphql/modules/
+  path.join(process.cwd(), 'src/graphql/modules/**/typeDefs.graphql'),
+  // Alternative Lambda location
+  path.join(process.cwd(), 'graphql/modules/**/typeDefs.graphql'),
   // Bundled location (when code is bundled by ESBuild)
   path.join(__dirname, 'modules/**/typeDefs.graphql'),
-  // Source location (development)
-  path.join(process.cwd(), 'src/graphql/modules/**/typeDefs.graphql'),
-  // Lambda package location (relative to handler)
-  path.join(process.cwd(), 'graphql/modules/**/typeDefs.graphql'),
   // Alternative bundled location
   path.resolve(__dirname, '../graphql/modules/**/typeDefs.graphql'),
+  // Development location
+  path.resolve(process.cwd(), 'src/graphql/modules/**/typeDefs.graphql'),
 ];
 
 let typeDefsArray: any[] = [];
@@ -34,24 +35,26 @@ let loaded = false;
 
 for (const graphqlPath of possiblePaths) {
   try {
+    logger.info(`Attempting to load from: ${graphqlPath}`);
     const loadedFiles = loadFilesSync(graphqlPath);
     if (loadedFiles && loadedFiles.length > 0) {
       typeDefsArray = loadedFiles;
       loaded = true;
-      console.log(
+      logger.info(
         `✅ Loaded ${loadedFiles.length} GraphQL typeDef files from: ${graphqlPath}`
       );
       break;
     }
   } catch (error) {
+    logger.warn(`Failed to load from ${graphqlPath}:`, error);
     // Try next path
     continue;
   }
 }
 
 if (!loaded) {
-  console.error('❌ Failed to load GraphQL typeDefs from all attempted paths:');
-  possiblePaths.forEach((p) => console.error(`  - ${p}`));
+  logger.error('❌ Failed to load GraphQL typeDefs from all attempted paths:');
+  possiblePaths.forEach((p) => logger.error(`  - ${p}`));
   throw new Error(
     'Could not load GraphQL typeDef files. Check that GraphQL files are included in the package.'
   );

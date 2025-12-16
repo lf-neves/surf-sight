@@ -4,7 +4,7 @@ GraphQL API service for SurfSight using Apollo Server with subscriptions support
 
 ## Features
 
-- 🚀 Apollo Server v4 with Express
+- 🚀 Apollo Server v5 with AWS Lambda
 - 📡 GraphQL subscriptions via graphql-ws
 - 🔄 DataLoader for efficient data fetching
 - 📦 Service layer pattern

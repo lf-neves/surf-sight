@@ -5,6 +5,10 @@ provider:
   runtime: nodejs22.x
   region: us-east-2
   profile: surf-sight
+  environment:
+    NODE_ENV: production
+    DATABASE_URL: ${env:DATABASE_URL, ''}
+    JWT_SECRET: ${env:JWT_SECRET, ''}
   vpc:
     securityGroupIds:
       - sg-0c60124c86ca3bc22
@@ -12,46 +16,48 @@ provider:
       - subnet-0b9b119c82a00e47c
       - subnet-0b6424d37c53badef
 
-plugins:
-  - serverless-offline
+useDotenv: true
 
 build:
   esbuild:
     bundle: true
-    minify: false
     sourcemap: true
     target: node22
     platform: node
-    format: esm
-    keepNames: true
-    exclude:
-      - '@prisma/client'
-      - '@aws-sdk/*'
-      - '@graphql-tools/*'
-      - '@apollo/server'
-      - '@as-integrations/aws-lambda'
-      - 'graphql-subscriptions'
+    format: cjs
     external:
-      - '@prisma/client'
       - '@aws-sdk/*'
       - '@graphql-tools/*'
       - '@apollo/server'
       - '@as-integrations/aws-lambda'
-      - 'graphql-subscriptions'
+      - 'graphql'
     loader:
       '.graphql': 'text'
 
 package:
   individually: true
+  excludeDevDependencies: true
   patterns:
-    - '!**'
+    - 'node_modules/.pnpm/**/@prisma+client@*/**'
+    - '!node_modules/.pnpm/**/@prisma+client@*/**/libquery_engine-*'
+    - 'node_modules/.pnpm/**/@prisma+client@*/**/libquery_engine-rhel-openssl-3.0.x.so.node'
+    - '!node_modules/.prisma/client/libquery_engine-*'
+    - 'node_modules/.prisma/client/libquery_engine-rhel-openssl-3.0.x.so.node'
+    - '!node_modules/prisma/libquery_engine-*'
+    - '!node_modules/@prisma/engines/**'
+    - '!node_modules/.cache/prisma/**'
     - 'src/graphql/modules/**/*.graphql'
-    - 'node_modules/@prisma/**'
-    - 'node_modules/.prisma/**'
-    - 'node_modules/@graphql-tools/**'
-    - 'node_modules/@apollo/**'
-    - 'node_modules/@as-integrations/**'
-    - 'node_modules/graphql-subscriptions/**'
+    - '!node_modules/**/*.test.*'
+    - '!node_modules/**/*.spec.*'
+    - '!node_modules/**/test/**'
+    - '!node_modules/**/tests/**'
+    - '!node_modules/**/__tests__/**'
+    - '!node_modules/**/docs/**'
+    - '!node_modules/**/examples/**'
+    - '!node_modules/**/.git/**'
+    - '!node_modules/**/.cache/**'
+    - '!node_modules/**/.bin/**'
+    - '!node_modules/**/*.md'
 
 functions:
   graphql:
@@ -59,7 +65,4 @@ functions:
     events:
       - httpApi:
           path: /graphql
-          method: POST
-      - httpApi:
-          path: /graphql
-          method: GET
+          method: ANY

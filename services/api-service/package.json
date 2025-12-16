@@ -2,7 +2,6 @@
   "name": "@surf-sight/api-service",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "main": "./dist/handler.js",
   "scripts": {
     "dev": "serverless offline --stage local --httpPort 4000",
@@ -11,9 +10,14 @@
     "codegen": "graphql-codegen --config codegen.yml",
     "codegen:watch": "graphql-codegen --config codegen.yml --watch",
     "lint": "eslint .",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "package:check": "node scripts/check-package.js",
+    "package": "pnpm --filter @surf-sight/database db:generate && serverless package",
+    "deploy": "pnpm --filter @surf-sight/database db:generate && serverless deploy"
   },
   "dependencies": {
+    "@apollo/server": "^5.0.0",
+    "@as-integrations/aws-lambda": "^4.0.1",
     "@graphql-tools/load-files": "^6.6.1",
     "@graphql-tools/merge": "^9.0.0",
     "@graphql-tools/schema": "^10.0.0",
@@ -21,8 +25,6 @@
     "@prisma/client": "^6.7.0",
     "@surf-sight/core": "workspace:*",
     "@surf-sight/database": "workspace:*",
-    "@apollo/server": "^4.10.0",
-    "@as-integrations/aws-lambda": "^1.2.1",
     "dataloader": "^2.2.2",
     "graphql": "^16.8.1",
     "graphql-subscriptions": "^2.0.0"
@@ -35,8 +37,7 @@
     "@types/aws-lambda": "^8.10.145",
     "@types/node": "^22.10.2",
     "graphql-tag": "^2.12.6",
-    "serverless-esbuild": "^1.56.1",
-    "serverless-offline": "^14.4.0",
+    "serverless": "^4.0.0",
     "tsx": "^4.7.0",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.0.0"
