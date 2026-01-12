@@ -1,5 +1,5 @@
 import { gql } from '@apollo/client';
-import { useQuery, useLazyQuery, useSuspenseQuery, useMutation, skipToken } from '@apollo/client/react';
+import { useQuery, useLazyQuery, useSuspenseQuery, skipToken } from '@apollo/client/react';
 import * as Apollo from '@apollo/client';
 
 type QueryHookOptions<TData, TVariables> = any;
@@ -481,7 +481,7 @@ export type LoginMutationFn = Apollo.MutationFunction<LoginMutation, LoginMutati
  */
 export function useLoginMutation(baseOptions?: Apollo.MutationHookOptions<LoginMutation, LoginMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return useMutation<LoginMutation, LoginMutationVariables>(LoginDocument, options);
+        return Apollo.useMutation<LoginMutation, LoginMutationVariables>(LoginDocument, options);
       }
 export type LoginMutationHookResult = ReturnType<typeof useLoginMutation>;
 export type LoginMutationResult = Apollo.MutationResult<LoginMutation>;
@@ -557,7 +557,7 @@ export type RequestPasswordResetMutationFn = Apollo.MutationFunction<RequestPass
  */
 export function useRequestPasswordResetMutation(baseOptions?: Apollo.MutationHookOptions<RequestPasswordResetMutation, RequestPasswordResetMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return useMutation<RequestPasswordResetMutation, RequestPasswordResetMutationVariables>(RequestPasswordResetDocument, options);
+        return Apollo.useMutation<RequestPasswordResetMutation, RequestPasswordResetMutationVariables>(RequestPasswordResetDocument, options);
       }
 export type RequestPasswordResetMutationHookResult = ReturnType<typeof useRequestPasswordResetMutation>;
 export type RequestPasswordResetMutationResult = Apollo.MutationResult<RequestPasswordResetMutation>;
@@ -599,7 +599,7 @@ export type SignupMutationFn = Apollo.MutationFunction<SignupMutation, SignupMut
  */
 export function useSignupMutation(baseOptions?: Apollo.MutationHookOptions<SignupMutation, SignupMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return useMutation<SignupMutation, SignupMutationVariables>(SignupDocument, options);
+        return Apollo.useMutation<SignupMutation, SignupMutationVariables>(SignupDocument, options);
       }
 export type SignupMutationHookResult = ReturnType<typeof useSignupMutation>;
 export type SignupMutationResult = Apollo.MutationResult<SignupMutation>;
