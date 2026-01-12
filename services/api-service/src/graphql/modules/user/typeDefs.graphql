@@ -41,4 +41,3 @@ input UpdateUserInput {
   phone: String
   skillLevel: UserSkillLevel
 }
-

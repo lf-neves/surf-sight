@@ -1,8 +1,12 @@
-import { Waves, Bell, Settings, User } from "lucide-react";
+'use client';
+
+import { Waves, Bell, Settings, User, LogOut, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 
 export function Header() {
+  const { currentUser, isAuthenticated, logout } = useCurrentUser();
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-6 py-4">
@@ -47,20 +51,45 @@ export function Header() {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" aria-label="Notifications">
-              <Bell className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" aria-label="Settings">
-              <Settings className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="default"
-              size="icon"
-              className="bg-gradient-to-br from-cyan-400 to-blue-500 hover:shadow-lg transition-shadow"
-              aria-label="User profile"
-            >
-              <User className="h-5 w-5" />
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <Button variant="ghost" size="icon" aria-label="Notifications">
+                  <Bell className="h-5 w-5" />
+                </Button>
+                <Button variant="ghost" size="icon" aria-label="Settings">
+                  <Settings className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="default"
+                  size="icon"
+                  className="bg-gradient-to-br from-cyan-400 to-blue-500 hover:shadow-lg transition-shadow"
+                  aria-label="User profile"
+                  title={currentUser?.email || 'User'}
+                >
+                  <User className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={logout}
+                  className="text-gray-700 hover:text-red-600"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <Link href="/login">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="bg-gradient-to-br from-cyan-400 to-blue-500 hover:shadow-lg transition-shadow"
+                >
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign in
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>

@@ -1,0 +1,9 @@
+type DatabaseStatus {
+  connected: Boolean!
+  responseTime: Int
+  error: String
+}
+
+extend type Query {
+  dbStatus: DatabaseStatus!
+}

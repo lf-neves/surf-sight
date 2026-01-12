@@ -1,5 +1,6 @@
 const js = require('@eslint/js');
 const tseslint = require('typescript-eslint');
+const path = require('path');
 
 // ESLint flat config for api-service with ESLint 9
 module.exports = tseslint.config(
@@ -16,6 +17,12 @@ module.exports = tseslint.config(
   },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        tsconfigRootDir: __dirname,
+        project: ['./tsconfig.json'],
+      },
+    },
     rules: {
       '@typescript-eslint/no-unused-vars': [
         'error',
@@ -26,6 +33,7 @@ module.exports = tseslint.config(
     },
   }
 );
+
 
 
 

@@ -91,6 +91,11 @@ import {
   favoriteMutationResolvers,
   favoriteSubscriptionResolvers,
 } from './modules/favorite-spot/resolvers';
+import { healthQueryResolvers } from './modules/health/resolvers';
+import {
+  authPayloadResolvers,
+  authMutationResolvers,
+} from './modules/auth/resolvers';
 
 // Import scalar resolvers
 import { DateTimeScalar, JSONScalar } from './scalars';
@@ -105,6 +110,7 @@ const resolvers = {
     ...forecastQueryResolvers,
     ...aiQueryResolvers,
     ...favoriteQueryResolvers,
+    ...healthQueryResolvers,
   },
   Mutation: {
     ...userMutationResolvers,
@@ -112,6 +118,7 @@ const resolvers = {
     ...forecastMutationResolvers,
     ...aiMutationResolvers,
     ...favoriteMutationResolvers,
+    ...authMutationResolvers,
   },
   Subscription: {
     ...forecastSubscriptionResolvers,
@@ -122,6 +129,7 @@ const resolvers = {
   AISummary: aiResolvers,
   User: userResolvers,
   FavoriteSpot: favoriteResolvers,
+  AuthPayload: authPayloadResolvers,
 };
 
 // Create executable schema

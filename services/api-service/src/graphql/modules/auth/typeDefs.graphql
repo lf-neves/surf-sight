@@ -1,0 +1,22 @@
+type AuthPayload {
+  token: String!
+  user: User!
+}
+
+extend type Mutation {
+  signup(input: SignupInput!): AuthPayload!
+  login(input: LoginInput!): AuthPayload!
+  requestPasswordReset(email: String!): Boolean!
+  resetPassword(token: String!, newPassword: String!): Boolean!
+}
+
+input SignupInput {
+  email: String!
+  password: String!
+  name: String
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}

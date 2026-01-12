@@ -5,13 +5,16 @@ enum UserSkillLevel {
 }
 
 model User {
-    userId     String          @id @default(uuid()) @db.Uuid
-    email      String          @unique
-    name       String?
-    phone      String?
-    skillLevel UserSkillLevel?
-    createdAt  DateTime        @default(now())
-    updatedAt  DateTime        @updatedAt
+    userId            String          @id @default(uuid()) @db.Uuid
+    email             String          @unique
+    password          String          // Hashed password
+    name              String?
+    phone             String?
+    skillLevel        UserSkillLevel?
+    resetToken        String?         // Password reset token
+    resetTokenExpiry  DateTime?       // Password reset token expiry
+    createdAt         DateTime        @default(now())
+    updatedAt         DateTime        @updatedAt
 
     favorites FavoriteSpot[]
 

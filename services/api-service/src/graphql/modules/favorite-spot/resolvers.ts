@@ -5,6 +5,7 @@ import {
   GraphqlSubscriptionResolvers,
 } from '../../generated/types';
 import { FAVORITE_UPDATED } from '../subscription/events';
+import { getAuthenticatedUser } from '../../../context';
 
 export const favoriteResolvers: GraphqlFavoriteSpotResolvers = {
   userId: (parent) => parent.userId,
@@ -29,12 +30,8 @@ export const favoriteResolvers: GraphqlFavoriteSpotResolvers = {
 
 export const favoriteQueryResolvers: GraphqlQueryResolvers = {
   favorites: async (_parent, _args, context) => {
-    if (!context.user) {
-      throw new Error('Authentication required.');
-    }
-    return context.services.favoriteSpotService.findForUser(
-      context.user.userId
-    );
+    const user = getAuthenticatedUser(context);
+    return context.services.favoriteSpotService.findForUser(user.userId);
   },
 
   isFavorite: async (_parent, args, context) => {
@@ -50,12 +47,10 @@ export const favoriteQueryResolvers: GraphqlQueryResolvers = {
 
 export const favoriteMutationResolvers: GraphqlMutationResolvers = {
   addFavorite: async (_parent, args, context) => {
-    if (!context.user) {
-      throw new Error('Authentication required.');
-    }
+    const user = getAuthenticatedUser(context);
 
     const favorite = await context.services.favoriteSpotService.add(
-      context.user.userId,
+      user.userId,
       args.spotId,
       args.notifyWhatsapp || undefined
     );
@@ -68,12 +63,10 @@ export const favoriteMutationResolvers: GraphqlMutationResolvers = {
   },
 
   removeFavorite: async (_parent, args, context) => {
-    if (!context.user) {
-      throw new Error('Authentication required.');
-    }
+    const user = getAuthenticatedUser(context);
 
     await context.services.favoriteSpotService.remove(
-      context.user.userId,
+      user.userId,
       args.spotId
     );
 
@@ -81,12 +74,10 @@ export const favoriteMutationResolvers: GraphqlMutationResolvers = {
   },
 
   updateFavorite: async (_parent, args, context) => {
-    if (!context.user) {
-      throw new Error('Authentication required.');
-    }
+    const user = getAuthenticatedUser(context);
 
     const favorite = await context.services.favoriteSpotService.update(
-      context.user.userId,
+      user.userId,
       args.spotId,
       args.notifyWhatsapp
     );
