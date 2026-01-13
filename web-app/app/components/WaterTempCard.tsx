@@ -3,10 +3,25 @@
 import { motion } from 'motion/react';
 import { Thermometer } from 'lucide-react';
 import { useState } from 'react';
+import { useLatestForecastForSpotQuery } from '@/lib/graphql/generated/apollo-graphql-hooks';
+import { parseForecastRaw } from '@/lib/utils/forecast';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-export function WaterTempCard() {
+interface WaterTempCardProps {
+  spotId: string;
+}
+
+export function WaterTempCard({ spotId }: WaterTempCardProps) {
   const [isHovering, setIsHovering] = useState(false);
-  const temperature = 24; // Warmer for Rio
+  const { data, loading } = useLatestForecastForSpotQuery({
+    variables: { spotId },
+    skip: !spotId,
+  });
+
+  // Get the latest forecast
+  const latestForecast = data?.latestForecastForSpot;
+  const parsed = latestForecast ? parseForecastRaw(latestForecast.raw) : null;
+  const temperature = parsed?.waterTemperature || 24; // Default to 24 if not available
   
   // Determine comfort level and color
   const getComfortInfo = (temp: number) => {
@@ -17,6 +32,10 @@ export function WaterTempCard() {
   };
 
   const comfort = getComfortInfo(temperature);
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <motion.div

@@ -249,6 +249,7 @@ export type Query = {
   forecastsForSpot: Array<Forecast>;
   isFavorite: Scalars['Boolean']['output'];
   latestAISummary?: Maybe<AiSummary>;
+  latestForecastForSpot?: Maybe<Forecast>;
   me?: Maybe<User>;
   searchSpots: Array<Spot>;
   spot?: Maybe<Spot>;
@@ -284,6 +285,11 @@ export type QueryIsFavoriteArgs = {
 export type QueryLatestAiSummaryArgs = {
   spotId: Scalars['ID']['input'];
   timestamp?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
+
+export type QueryLatestForecastForSpotArgs = {
+  spotId: Scalars['ID']['input'];
 };
 
 
@@ -325,6 +331,7 @@ export type Spot = {
   forecast: Array<Forecast>;
   id: Scalars['ID']['output'];
   lat: Scalars['Float']['output'];
+  latestForecastForSpot?: Maybe<Forecast>;
   lon: Scalars['Float']['output'];
   meta?: Maybe<Scalars['JSON']['output']>;
   name: Scalars['String']['output'];
@@ -431,6 +438,28 @@ export type SignupMutationVariables = Exact<{
 
 export type SignupMutation = { __typename?: 'Mutation', signup: { __typename?: 'AuthPayload', token: string, user: { __typename?: 'User', id: string, email: string, name?: string | null, phone?: string | null, skillLevel?: UserSkillLevel | null, createdAt: string, updatedAt: string } } };
 
+export type ForecastsForSpotQueryVariables = Exact<{
+  spotId: Scalars['ID']['input'];
+  nextHours?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type ForecastsForSpotQuery = { __typename?: 'Query', forecastsForSpot: Array<{ __typename?: 'Forecast', id: string, spotId: string, timestamp: string, raw: any, source: string, createdAt: string, updatedAt: string }> };
+
+export type LatestForecastForSpotQueryVariables = Exact<{
+  spotId: Scalars['ID']['input'];
+}>;
+
+
+export type LatestForecastForSpotQuery = { __typename?: 'Query', latestForecastForSpot?: { __typename?: 'Forecast', id: string, spotId: string, timestamp: string, raw: any, source: string, createdAt: string, updatedAt: string } | null };
+
+export type SearchSpotsQueryVariables = Exact<{
+  query: Scalars['String']['input'];
+}>;
+
+
+export type SearchSpotsQuery = { __typename?: 'Query', searchSpots: Array<{ __typename?: 'Spot', id: string, name: string, slug: string, lat: number, lon: number, type: SpotType }> };
+
 export type SpotQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -441,7 +470,15 @@ export type SpotQuery = { __typename?: 'Query', spot?: { __typename?: 'Spot', id
 export type SpotListQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SpotListQuery = { __typename?: 'Query', spots: Array<{ __typename?: 'Spot', id: string, name: string }> };
+export type SpotListQuery = { __typename?: 'Query', spots: Array<{ __typename?: 'Spot', id: string, name: string, slug: string }> };
+
+export type SpotWithForecastQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+  nextHours?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type SpotWithForecastQuery = { __typename?: 'Query', spot?: { __typename?: 'Spot', id: string, name: string, slug: string, lat: number, lon: number, type: SpotType, meta?: any | null, latestForecastForSpot?: { __typename?: 'Forecast', id: string, spotId: string, timestamp: string, raw: any, source: string, createdAt: string, updatedAt: string } | null, forecast: Array<{ __typename?: 'Forecast', id: string, spotId: string, timestamp: string, raw: any, source: string, createdAt: string, updatedAt: string }> } | null };
 
 
 export const LoginDocument = gql`
@@ -604,6 +641,144 @@ export function useSignupMutation(baseOptions?: Apollo.MutationHookOptions<Signu
 export type SignupMutationHookResult = ReturnType<typeof useSignupMutation>;
 export type SignupMutationResult = Apollo.MutationResult<SignupMutation>;
 export type SignupMutationOptions = Apollo.BaseMutationOptions<SignupMutation, SignupMutationVariables>;
+export const ForecastsForSpotDocument = gql`
+    query ForecastsForSpot($spotId: ID!, $nextHours: Int) {
+  forecastsForSpot(spotId: $spotId, nextHours: $nextHours) {
+    id
+    spotId
+    timestamp
+    raw
+    source
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useForecastsForSpotQuery__
+ *
+ * To run a query within a React component, call `useForecastsForSpotQuery` and pass it any options that fit your needs.
+ * When your component renders, `useForecastsForSpotQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useForecastsForSpotQuery({
+ *   variables: {
+ *      spotId: // value for 'spotId'
+ *      nextHours: // value for 'nextHours'
+ *   },
+ * });
+ */
+export function useForecastsForSpotQuery(baseOptions: QueryHookOptions<ForecastsForSpotQuery, ForecastsForSpotQueryVariables> & ({ variables: ForecastsForSpotQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return useQuery<ForecastsForSpotQuery, ForecastsForSpotQueryVariables>(ForecastsForSpotDocument, options);
+      }
+export function useForecastsForSpotLazyQuery(baseOptions?: LazyQueryHookOptions<ForecastsForSpotQuery, ForecastsForSpotQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return useLazyQuery<ForecastsForSpotQuery, ForecastsForSpotQueryVariables>(ForecastsForSpotDocument, options);
+        }
+export function useForecastsForSpotSuspenseQuery(baseOptions?: typeof skipToken | SuspenseQueryHookOptions<ForecastsForSpotQuery, ForecastsForSpotQueryVariables>) {
+          const options = baseOptions === skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return useSuspenseQuery<ForecastsForSpotQuery, ForecastsForSpotQueryVariables>(ForecastsForSpotDocument, options);
+        }
+export type ForecastsForSpotQueryHookResult = ReturnType<typeof useForecastsForSpotQuery>;
+export type ForecastsForSpotLazyQueryHookResult = ReturnType<typeof useForecastsForSpotLazyQuery>;
+export type ForecastsForSpotSuspenseQueryHookResult = ReturnType<typeof useForecastsForSpotSuspenseQuery>;
+export type ForecastsForSpotQueryResult = ReturnType<typeof useForecastsForSpotQuery>;
+export const LatestForecastForSpotDocument = gql`
+    query LatestForecastForSpot($spotId: ID!) {
+  latestForecastForSpot(spotId: $spotId) {
+    id
+    spotId
+    timestamp
+    raw
+    source
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useLatestForecastForSpotQuery__
+ *
+ * To run a query within a React component, call `useLatestForecastForSpotQuery` and pass it any options that fit your needs.
+ * When your component renders, `useLatestForecastForSpotQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useLatestForecastForSpotQuery({
+ *   variables: {
+ *      spotId: // value for 'spotId'
+ *   },
+ * });
+ */
+export function useLatestForecastForSpotQuery(baseOptions: QueryHookOptions<LatestForecastForSpotQuery, LatestForecastForSpotQueryVariables> & ({ variables: LatestForecastForSpotQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return useQuery<LatestForecastForSpotQuery, LatestForecastForSpotQueryVariables>(LatestForecastForSpotDocument, options);
+      }
+export function useLatestForecastForSpotLazyQuery(baseOptions?: LazyQueryHookOptions<LatestForecastForSpotQuery, LatestForecastForSpotQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return useLazyQuery<LatestForecastForSpotQuery, LatestForecastForSpotQueryVariables>(LatestForecastForSpotDocument, options);
+        }
+export function useLatestForecastForSpotSuspenseQuery(baseOptions?: typeof skipToken | SuspenseQueryHookOptions<LatestForecastForSpotQuery, LatestForecastForSpotQueryVariables>) {
+          const options = baseOptions === skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return useSuspenseQuery<LatestForecastForSpotQuery, LatestForecastForSpotQueryVariables>(LatestForecastForSpotDocument, options);
+        }
+export type LatestForecastForSpotQueryHookResult = ReturnType<typeof useLatestForecastForSpotQuery>;
+export type LatestForecastForSpotLazyQueryHookResult = ReturnType<typeof useLatestForecastForSpotLazyQuery>;
+export type LatestForecastForSpotSuspenseQueryHookResult = ReturnType<typeof useLatestForecastForSpotSuspenseQuery>;
+export type LatestForecastForSpotQueryResult = ReturnType<typeof useLatestForecastForSpotQuery>;
+export const SearchSpotsDocument = gql`
+    query SearchSpots($query: String!) {
+  searchSpots(query: $query) {
+    id
+    name
+    slug
+    lat
+    lon
+    type
+  }
+}
+    `;
+
+/**
+ * __useSearchSpotsQuery__
+ *
+ * To run a query within a React component, call `useSearchSpotsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchSpotsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchSpotsQuery({
+ *   variables: {
+ *      query: // value for 'query'
+ *   },
+ * });
+ */
+export function useSearchSpotsQuery(baseOptions: QueryHookOptions<SearchSpotsQuery, SearchSpotsQueryVariables> & ({ variables: SearchSpotsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return useQuery<SearchSpotsQuery, SearchSpotsQueryVariables>(SearchSpotsDocument, options);
+      }
+export function useSearchSpotsLazyQuery(baseOptions?: LazyQueryHookOptions<SearchSpotsQuery, SearchSpotsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return useLazyQuery<SearchSpotsQuery, SearchSpotsQueryVariables>(SearchSpotsDocument, options);
+        }
+export function useSearchSpotsSuspenseQuery(baseOptions?: typeof skipToken | SuspenseQueryHookOptions<SearchSpotsQuery, SearchSpotsQueryVariables>) {
+          const options = baseOptions === skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return useSuspenseQuery<SearchSpotsQuery, SearchSpotsQueryVariables>(SearchSpotsDocument, options);
+        }
+export type SearchSpotsQueryHookResult = ReturnType<typeof useSearchSpotsQuery>;
+export type SearchSpotsLazyQueryHookResult = ReturnType<typeof useSearchSpotsLazyQuery>;
+export type SearchSpotsSuspenseQueryHookResult = ReturnType<typeof useSearchSpotsSuspenseQuery>;
+export type SearchSpotsQueryResult = ReturnType<typeof useSearchSpotsQuery>;
 export const SpotDocument = gql`
     query Spot($id: ID!) {
   spot(id: $id) {
@@ -650,6 +825,7 @@ export const SpotListDocument = gql`
   spots {
     id
     name
+    slug
   }
 }
     `;
@@ -685,3 +861,68 @@ export type SpotListQueryHookResult = ReturnType<typeof useSpotListQuery>;
 export type SpotListLazyQueryHookResult = ReturnType<typeof useSpotListLazyQuery>;
 export type SpotListSuspenseQueryHookResult = ReturnType<typeof useSpotListSuspenseQuery>;
 export type SpotListQueryResult = ReturnType<typeof useSpotListQuery>;
+export const SpotWithForecastDocument = gql`
+    query SpotWithForecast($id: ID!, $nextHours: Int) {
+  spot(id: $id) {
+    id
+    name
+    slug
+    lat
+    lon
+    type
+    meta
+    latestForecastForSpot {
+      id
+      spotId
+      timestamp
+      raw
+      source
+      createdAt
+      updatedAt
+    }
+    forecast(nextHours: $nextHours) {
+      id
+      spotId
+      timestamp
+      raw
+      source
+      createdAt
+      updatedAt
+    }
+  }
+}
+    `;
+
+/**
+ * __useSpotWithForecastQuery__
+ *
+ * To run a query within a React component, call `useSpotWithForecastQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSpotWithForecastQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSpotWithForecastQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *      nextHours: // value for 'nextHours'
+ *   },
+ * });
+ */
+export function useSpotWithForecastQuery(baseOptions: QueryHookOptions<SpotWithForecastQuery, SpotWithForecastQueryVariables> & ({ variables: SpotWithForecastQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return useQuery<SpotWithForecastQuery, SpotWithForecastQueryVariables>(SpotWithForecastDocument, options);
+      }
+export function useSpotWithForecastLazyQuery(baseOptions?: LazyQueryHookOptions<SpotWithForecastQuery, SpotWithForecastQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return useLazyQuery<SpotWithForecastQuery, SpotWithForecastQueryVariables>(SpotWithForecastDocument, options);
+        }
+export function useSpotWithForecastSuspenseQuery(baseOptions?: typeof skipToken | SuspenseQueryHookOptions<SpotWithForecastQuery, SpotWithForecastQueryVariables>) {
+          const options = baseOptions === skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return useSuspenseQuery<SpotWithForecastQuery, SpotWithForecastQueryVariables>(SpotWithForecastDocument, options);
+        }
+export type SpotWithForecastQueryHookResult = ReturnType<typeof useSpotWithForecastQuery>;
+export type SpotWithForecastLazyQueryHookResult = ReturnType<typeof useSpotWithForecastLazyQuery>;
+export type SpotWithForecastSuspenseQueryHookResult = ReturnType<typeof useSpotWithForecastSuspenseQuery>;
+export type SpotWithForecastQueryResult = ReturnType<typeof useSpotWithForecastQuery>;

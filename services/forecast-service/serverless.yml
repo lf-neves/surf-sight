@@ -10,42 +10,101 @@ provider:
   # Defaults to 'us-east-1' if AWS_REGION env var not set
   region: ${env:AWS_REGION, 'us-east-1'}
   environment:
-    # Replace placeholder with actual queue URL
-    SQS_QUEUE_URL: ${env:SQS_QUEUE_URL, 'PLACEHOLDER_SQS_QUEUE_URL'}
+    DATABASE_URL: ${env:DATABASE_URL, ''}
+    SQS_QUEUE_URL: ${env:SQS_QUEUE_URL, 'http://localhost:9324/queue/forecast-queue'}
+    API_ENV: ${env:API_ENV, 'development'}
+
+useDotenv: true
+
+build:
+  esbuild:
+    bundle: true
+    sourcemap: true
+    target: node22
+    platform: node
+    format: cjs
+    external:
+      - '@aws-sdk/*'
+    minify: false
+
+package:
+  individually: true
+  excludeDevDependencies: true
+  patterns:
+    - 'node_modules/.pnpm/**/@prisma+client@*/**'
+    - '!node_modules/.pnpm/**/@prisma+client@*/**/libquery_engine-*'
+    - 'node_modules/.pnpm/**/@prisma+client@*/**/libquery_engine-rhel-openssl-3.0.x.so.node'
+    - '!node_modules/.prisma/client/libquery_engine-*'
+    - 'node_modules/.prisma/client/libquery_engine-rhel-openssl-3.0.x.so.node'
+    - '!node_modules/prisma/libquery_engine-*'
+    - '!node_modules/@prisma/engines/**'
+    - '!node_modules/.cache/prisma/**'
+    - '!node_modules/**/*.test.*'
+    - '!node_modules/**/*.spec.*'
 
 functions:
   enqueueForecasts:
-    # Replace PLACEHOLDER_HANDLER_PATH with actual path (e.g., dist/handlers/handleEnqueueRetrievedForecastsToProcess)
-    handler: PLACEHOLDER_HANDLER_PATH.handleEnqueueRetrievedForecastsToProcess
-    events:
-      # Replace with event type (e.g., schedule: rate(1 hour) or http: { path: /forecasts, method: get })
-      - PLACEHOLDER_EVENT_TYPE: PLACEHOLDER_EVENT_VALUE
+    handler: src/handlers/handleEnqueueRetrievedForecastsToProcess.handleEnqueueRetrievedForecastsToProcess
+    # For local testing, you can invoke this manually
+    # For production, uncomment one of these event types:
+    # events:
+    #   - schedule:
+    #       rate: rate(1 hour)
+    #       enabled: true
+    # Or HTTP endpoint for manual triggering:
+    #   - http:
+    #       path: /forecasts/enqueue
+    #       method: post
 
   processSqsMessage:
-    # Replace PLACEHOLDER_HANDLER_PATH with actual path (e.g., dist/handlers/handleSqsMessage)
-    handler: PLACEHOLDER_HANDLER_PATH.handleSqsMessage
-    # DLQ for failed Lambda invocations (async errors)
-    deadLetter:
-      targetArn:
-        Fn::GetAtt:
-          - ForecastServiceDLQ
-          - Arn
+    handler: src/handlers/handleSqsMessage.handleSqsMessage
+    timeout: 300
+    # Note: Dead letter queue is configured via SQS queue RedrivePolicy in resources
     events:
       - sqs:
-          # Replace placeholder with actual queue ARN or use env var
-          arn: ${env:SQS_QUEUE_ARN, 'PLACEHOLDER_SQS_QUEUE_ARN'}
-          # Note: Configure source queue's redrive policy separately to send messages to DLQ after maxReceiveCount failures
+          arn:
+            Fn::GetAtt:
+              - ForecastServiceQueue
+              - Arn
           batchSize: ${env:SQS_BATCH_SIZE, 10}
 
 resources:
   Resources:
+    ForecastServiceQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-queue
+        MessageRetentionPeriod: 345600  # 4 days
+        VisibilityTimeout: 300  # 5 minutes (should match Lambda timeout)
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - ForecastServiceDLQ
+              - Arn
+          maxReceiveCount: 3
+
     ForecastServiceDLQ:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: ${self:service}-${self:provider.stage}-dlq
         MessageRetentionPeriod: 1209600 # 14 days
         ReceiveMessageWaitTimeSeconds: 0
+
   Outputs:
+    ForecastServiceQueueArn:
+      Description: ARN of the main SQS Queue
+      Value:
+        Fn::GetAtt:
+          - ForecastServiceQueue
+          - Arn
+      Export:
+        Name: ${self:service}-${self:provider.stage}-queue-arn
+    ForecastServiceQueueUrl:
+      Description: URL of the main SQS Queue
+      Value:
+        Ref: ForecastServiceQueue
+      Export:
+        Name: ${self:service}-${self:provider.stage}-queue-url
     ForecastServiceDLQArn:
       Description: ARN of the Dead Letter Queue
       Value:

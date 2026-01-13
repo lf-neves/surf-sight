@@ -41,6 +41,10 @@ export const forecastQueryResolvers: GraphqlQueryResolvers = {
       args.nextHours || undefined
     );
   },
+
+  latestForecastForSpot: async (_parent, args, context) => {
+    return context.services.forecastService.findLatestForecastForSpot(args.spotId);
+  },
 };
 
 export const forecastMutationResolvers: GraphqlMutationResolvers = {

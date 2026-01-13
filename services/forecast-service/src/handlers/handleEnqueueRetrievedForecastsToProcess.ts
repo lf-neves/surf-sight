@@ -39,7 +39,7 @@ export const handleEnqueueRetrievedForecastsToProcess = async () => {
         const forecastServiceEvent =
           await prismaClient.forecastServiceEvent.create({
             data: {
-              eventType: 'create_new_forecasts',
+              eventType: 'FORECASTS_UPDATE_ENQUEUED',
               payload: JSON.stringify({
                 forecast: forecastResponse,
                 spotId: spot.spotId,

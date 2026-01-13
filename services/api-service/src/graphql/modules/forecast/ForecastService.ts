@@ -37,6 +37,20 @@ export class ForecastService {
     });
   }
 
+  async findLatestForecastForSpot(spotId: string): Promise<Forecast | null> {
+    return this.prisma.forecast.findFirst({
+      where: {
+        spotId,
+        timestamp: {
+          gte: new Date(), // Only future forecasts
+        },
+      },
+      orderBy: {
+        timestamp: 'asc', // Get the earliest future forecast (most current)
+      },
+    });
+  }
+
   async create(data: {
     spotId: string;
     timestamp: Date;

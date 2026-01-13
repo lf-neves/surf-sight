@@ -13,6 +13,12 @@ type ForecastEventPayload = {
 };
 
 function parseProviderResponseDates(rawForecast: any): ProviderResponse {
+  if (!rawForecast.points || !Array.isArray(rawForecast.points)) {
+    throw new Error(
+      `Invalid forecast data: points array is missing or invalid. Received: ${JSON.stringify(rawForecast)}`
+    );
+  }
+
   return {
     ...rawForecast,
     fetchedAt: new Date(rawForecast.fetchedAt),

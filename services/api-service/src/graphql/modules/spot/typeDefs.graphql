@@ -9,6 +9,7 @@ type Spot {
   createdAt: DateTime!
   updatedAt: DateTime!
   forecast(nextHours: Int = 24): [Forecast!]!
+  latestForecastForSpot: Forecast
   aiSummary(timestamp: DateTime): AISummary
   aiInsights(timestamp: DateTime): AIInsights
 }

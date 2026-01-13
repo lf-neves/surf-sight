@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './store/authSlice';
+import spotReducer from './store/spotSlice';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    spot: spotReducer,
   },
 });
 

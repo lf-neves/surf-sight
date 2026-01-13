@@ -4,8 +4,15 @@ import { motion } from 'motion/react';
 import { Droplets } from 'lucide-react';
 import { useState } from 'react';
 
-export function TideCard() {
+interface TideCardProps {
+  spotId: string;
+}
+
+export function TideCard({ spotId }: TideCardProps) {
   const [isHovering, setIsHovering] = useState(false);
+  
+  // Note: Tide data is typically not available in forecast data
+  // This would need to come from a separate tide API
 
   // Mock tide data (height in meters)
   const tideData = [

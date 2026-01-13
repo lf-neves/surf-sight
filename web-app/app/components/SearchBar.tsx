@@ -1,36 +1,49 @@
 "use client";
 
-import { useState } from "react";
-import { Search, MapPin, TrendingUp } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Search, MapPin, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-
-interface SpotSuggestion {
-  name: string;
-  location: string;
-  score: number;
-  distance?: string;
-}
+import { useAppDispatch } from "@/lib/store/hooks";
+import { setSelectedSpot } from "@/lib/store/spotSlice";
+import { useSearchSpotsLazyQuery } from "@/lib/graphql/generated/apollo-graphql-hooks";
 
 export function SearchBar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const dispatch = useAppDispatch();
 
-  const popularSpots: SpotSuggestion[] = [
-    { name: "Arpoador", location: "Rio de Janeiro, RJ", score: 8.5 },
-    { name: "Praia do Rosa", location: "Imbituba, SC", score: 7.8 },
-    { name: "Fernando de Noronha", location: "Pernambuco, PE", score: 9.2 },
-    { name: "Itamambuca", location: "Ubatuba, SP", score: 8.1 },
-    { name: "Praia Mole", location: "Florianópolis, SC", score: 7.5 },
-    { name: "Joaquina", location: "Florianópolis, SC", score: 8.3 },
-  ];
+  const [searchSpots, { data, loading }] = useSearchSpotsLazyQuery();
 
-  const filteredSpots = searchQuery
-    ? popularSpots.filter(
-        (spot) =>
-          spot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          spot.location.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : popularSpots.slice(0, 4);
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Trigger search when debounced query changes
+  useEffect(() => {
+    if (debouncedQuery.trim().length >= 2) {
+      searchSpots({
+        variables: { query: debouncedQuery },
+      });
+    }
+  }, [debouncedQuery, searchSpots]);
+
+  const handleSpotSelect = useCallback((spot: { id: string; name: string; slug: string }) => {
+    dispatch(setSelectedSpot({
+      id: spot.id,
+      name: spot.name,
+      slug: spot.slug,
+    }));
+    setSearchQuery(spot.name);
+    setIsFocused(false);
+  }, [dispatch]);
+
+  const spots = data?.searchSpots || [];
 
   return (
     <div className="relative max-w-3xl mx-auto">
@@ -79,36 +92,36 @@ export function SearchBar() {
             >
               <div className="p-2">
                 <div className="text-xs text-gray-500 px-3 py-2">
-                  {searchQuery ? "Resultados" : "Picos Populares"}
+                  {searchQuery ? "Resultados" : "Digite para buscar picos..."}
                 </div>
-                {filteredSpots.map((spot, index) => (
+                {loading && (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-5 h-5 text-cyan-600 animate-spin" />
+                    <span className="ml-2 text-sm text-gray-500">Buscando...</span>
+                  </div>
+                )}
+                {!loading && searchQuery && spots.length === 0 && (
+                  <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                    Nenhum pico encontrado
+                  </div>
+                )}
+                {!loading && spots.map((spot, index) => (
                   <motion.button
-                    key={spot.name}
+                    key={spot.id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors text-left"
-                    onClick={() => {
-                      setSearchQuery(spot.name);
-                      setIsFocused(false);
-                    }}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors text-left"
+                    onClick={() => handleSpotSelect(spot)}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-cyan-100 to-blue-100 rounded-lg flex items-center justify-center">
-                        <MapPin className="w-5 h-5 text-cyan-600" />
-                      </div>
-                      <div>
-                        <div className="text-gray-900">{spot.name}</div>
-                        <div className="text-xs text-gray-500">
-                          {spot.location}
-                        </div>
-                      </div>
+                    <div className="w-10 h-10 bg-gradient-to-br from-cyan-100 to-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <MapPin className="w-5 h-5 text-cyan-600" />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="px-2 py-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg text-sm">
-                        {spot.score}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-gray-900 font-medium truncate">{spot.name}</div>
+                      <div className="text-xs text-gray-500 capitalize">
+                        {spot.type}
                       </div>
-                      <TrendingUp className="w-4 h-4 text-green-500" />
                     </div>
                   </motion.button>
                 ))}

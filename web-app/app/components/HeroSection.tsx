@@ -3,9 +3,35 @@
 import { motion } from 'motion/react';
 import { TrendingUp, Wind, Droplets, Thermometer, MapPin, Clock } from 'lucide-react';
 import { useState } from 'react';
+import { useAppSelector } from '@/lib/store/hooks';
+import { useSpotWithForecastQuery } from '@/lib/graphql/generated/apollo-graphql-hooks';
+import {
+  parseForecastRaw,
+  windSpeedToKmh,
+  degreesToDirection,
+  calculateSurfabilityScore,
+} from '@/lib/utils/forecast';
 
 export function HeroSection() {
   const [isHovering, setIsHovering] = useState(false);
+  const selectedSpot = useAppSelector((state) => state.spot.selectedSpot);
+  const { data, loading } = useSpotWithForecastQuery({
+    variables: { id: selectedSpot?.id || '', nextHours: 1 },
+    skip: !selectedSpot?.id,
+  });
+
+  const spot = data?.spot;
+  const latestForecast = spot?.latestForecastForSpot;
+  const parsed = latestForecast ? parseForecastRaw(latestForecast.raw) : null;
+
+  const spotName = spot?.name || 'Carregando...';
+  const swellHeight = parsed?.swellHeight || parsed?.waveHeight || 1.3;
+  const swellPeriod = parsed?.swellPeriod || parsed?.wavePeriod || 12;
+  const swellDirection = parsed?.swellDirection || parsed?.waveDirection || 112.5;
+  const windSpeed = parsed ? Math.round(windSpeedToKmh(parsed.windSpeed)) : 12;
+  const windDirection = parsed ? degreesToDirection(parsed.windDirection) : 'O';
+  const waterTemp = parsed?.waterTemperature || 24;
+  const surfabilityScore = parsed ? calculateSurfabilityScore(parsed) : 8.5;
 
   return (
     <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 p-8 md:p-12">
@@ -88,7 +114,7 @@ export function HeroSection() {
             <div className="flex items-center gap-3 mb-3 flex-wrap">
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-cyan-600" />
-                <h1 className="text-gray-900">Arpoador, Rio de Janeiro</h1>
+                <h1 className="text-gray-900">{spotName}</h1>
               </div>
               <motion.div
                 className="px-4 py-2 bg-white rounded-full shadow-sm"
@@ -138,7 +164,7 @@ export function HeroSection() {
                 animate={isHovering ? { scale: [1, 1.1, 1] } : {}}
                 transition={{ duration: 0.5 }}
               >
-                8.5
+                {surfabilityScore.toFixed(1)}
               </motion.div>
               <div className="text-sm text-gray-500 mb-1">Surfabilidade</div>
               <motion.div 
@@ -152,7 +178,7 @@ export function HeroSection() {
                   <motion.div
                     key={i}
                     className={`w-1.5 h-6 rounded-full ${
-                      i < 8 ? 'bg-gradient-to-t from-cyan-400 to-blue-500' : 'bg-gray-200'
+                      i < Math.round(surfabilityScore) ? 'bg-gradient-to-t from-cyan-400 to-blue-500' : 'bg-gray-200'
                     }`}
                     initial={{ scaleY: 0 }}
                     animate={{ scaleY: 1 }}
@@ -176,8 +202,8 @@ export function HeroSection() {
               <TrendingUp className="w-4 h-4 text-cyan-600" />
               <span className="text-xs text-gray-500">Swell Principal</span>
             </div>
-            <div className="text-gray-900">1.3m @ 12s</div>
-            <div className="text-xs text-cyan-600 mt-0.5">ESE • Organizado</div>
+            <div className="text-gray-900">{swellHeight.toFixed(1)}m @ {swellPeriod}s</div>
+            <div className="text-xs text-cyan-600 mt-0.5">{degreesToDirection(swellDirection)} • Organizado</div>
           </motion.div>
 
           <motion.div 
@@ -189,8 +215,8 @@ export function HeroSection() {
               <Wind className="w-4 h-4 text-teal-600" />
               <span className="text-xs text-gray-500">Vento</span>
             </div>
-            <div className="text-gray-900">12 km/h</div>
-            <div className="text-xs text-teal-600 mt-0.5">✓ Offshore O</div>
+            <div className="text-gray-900">{windSpeed} km/h</div>
+            <div className="text-xs text-teal-600 mt-0.5">✓ Offshore {windDirection}</div>
           </motion.div>
 
           <motion.div 
@@ -215,7 +241,7 @@ export function HeroSection() {
               <Thermometer className="w-4 h-4 text-cyan-600" />
               <span className="text-xs text-gray-500">Temp. da Água</span>
             </div>
-            <div className="text-gray-900">24°C</div>
+            <div className="text-gray-900">{Math.round(waterTemp)}°C</div>
             <div className="text-xs text-teal-600 mt-0.5">Sunga</div>
           </motion.div>
         </div>

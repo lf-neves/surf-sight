@@ -3,9 +3,37 @@
 import { motion } from 'motion/react';
 import { TrendingUp, ArrowDown } from 'lucide-react';
 import { useState } from 'react';
+import { useLatestForecastForSpotQuery } from '@/lib/graphql/generated/apollo-graphql-hooks';
+import {
+  parseForecastRaw,
+  degreesToDirection,
+} from '@/lib/utils/forecast';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-export function SwellCard() {
+interface SwellCardProps {
+  spotId: string;
+}
+
+export function SwellCard({ spotId }: SwellCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { data, loading } = useLatestForecastForSpotQuery({
+    variables: { spotId },
+    skip: !spotId,
+  });
+
+  // Get the latest forecast
+  const latestForecast = data?.latestForecastForSpot;
+  const parsed = latestForecast ? parseForecastRaw(latestForecast.raw) : null;
+
+  const swellHeight = parsed?.swellHeight || parsed?.waveHeight || 1.3;
+  const swellPeriod = parsed?.swellPeriod || parsed?.wavePeriod || 12;
+  const swellDirection = parsed?.swellDirection || parsed?.waveDirection || 112.5;
+  const directionDegrees = swellDirection;
+  const directionName = degreesToDirection(swellDirection);
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <motion.div
@@ -38,7 +66,7 @@ export function SwellCard() {
           {/* Direction Arrow */}
           <motion.div
             className="absolute inset-0 flex items-center justify-center"
-            animate={{ rotate: 112.5 }} // ESE direction
+            animate={{ rotate: directionDegrees }}
             transition={{ duration: 1, ease: "easeOut" }}
           >
             <ArrowDown className="w-8 h-8 text-cyan-600" />
@@ -53,10 +81,10 @@ export function SwellCard() {
       >
         <div className="text-xs text-gray-500 mb-1">Swell Principal</div>
         <div className="flex items-baseline gap-2">
-          <span className="text-2xl text-gray-900">1.3m</span>
-          <span className="text-gray-600">@ 12s</span>
+          <span className="text-2xl text-gray-900">{swellHeight.toFixed(1)}m</span>
+          <span className="text-gray-600">@ {swellPeriod}s</span>
         </div>
-        <div className="text-sm text-cyan-600 mt-1">ESE (112°)</div>
+        <div className="text-sm text-cyan-600 mt-1">{directionName} ({Math.round(directionDegrees)}°)</div>
         <div className="text-xs text-green-600 mt-2 flex items-center gap-1">
           ✓ <span>Potente & Organizada</span>
         </div>

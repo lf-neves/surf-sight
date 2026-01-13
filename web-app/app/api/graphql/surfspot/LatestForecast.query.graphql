@@ -1,0 +1,11 @@
+query LatestForecastForSpot($spotId: ID!) {
+  latestForecastForSpot(spotId: $spotId) {
+    id
+    spotId
+    timestamp
+    raw
+    source
+    createdAt
+    updatedAt
+  }
+}

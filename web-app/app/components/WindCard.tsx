@@ -3,11 +3,39 @@
 import { motion } from 'motion/react';
 import { Wind, ArrowUp } from 'lucide-react';
 import { useState } from 'react';
+import { useLatestForecastForSpotQuery } from '@/lib/graphql/generated/apollo-graphql-hooks';
+import {
+  parseForecastRaw,
+  windSpeedToKmh,
+  degreesToDirection,
+} from '@/lib/utils/forecast';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-export function WindCard() {
-  // Offshore wind = good conditions (green/teal background)
-  const isOffshore = true;
+interface WindCardProps {
+  spotId: string;
+}
+
+export function WindCard({ spotId }: WindCardProps) {
   const [isHovering, setIsHovering] = useState(false);
+  const { data, loading } = useLatestForecastForSpotQuery({
+    variables: { spotId },
+    skip: !spotId,
+  });
+
+  // Get the latest forecast
+  const latestForecast = data?.latestForecastForSpot;
+  const parsed = latestForecast ? parseForecastRaw(latestForecast.raw) : null;
+
+  const windSpeed = parsed ? Math.round(windSpeedToKmh(parsed.windSpeed)) : 12;
+  const windDirection = parsed?.windDirection || 270;
+  const directionName = parsed ? degreesToDirection(parsed.windDirection) : 'Oeste';
+  
+  // Simplified: assume offshore if wind is from west (270°) - this should be based on spot orientation
+  const isOffshore = windDirection >= 250 && windDirection <= 290;
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <motion.div
@@ -43,10 +71,10 @@ export function WindCard() {
           <div className="absolute left-1 top-1/2 -translate-y-1/2 text-xs text-gray-500">W</div>
           <div className="absolute right-1 top-1/2 -translate-y-1/2 text-xs text-gray-500">E</div>
 
-          {/* Direction Arrow - West (270°) */}
+          {/* Direction Arrow */}
           <motion.div
             className="absolute inset-0 flex items-center justify-center"
-            animate={{ rotate: 270 }}
+            animate={{ rotate: windDirection }}
             transition={{ duration: 1, ease: "easeOut" }}
           >
             <ArrowUp className={`w-10 h-10 ${isOffshore ? 'text-teal-600' : 'text-orange-600'}`} />
@@ -57,11 +85,11 @@ export function WindCard() {
       {/* Wind Details */}
       <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4">
         <div className="flex items-baseline gap-2 mb-2">
-          <span className="text-3xl text-gray-900">12</span>
+          <span className="text-3xl text-gray-900">{windSpeed}</span>
           <span className="text-gray-600">km/h</span>
         </div>
         <div className={`text-sm mb-1 ${isOffshore ? 'text-teal-700' : 'text-orange-700'}`}>
-          Oeste (270°)
+          {directionName} ({Math.round(windDirection)}°)
         </div>
         <div className={`inline-block px-2 py-1 rounded-full text-xs ${
           isOffshore 

@@ -1,36 +1,51 @@
 'use client';
 
 import { motion } from 'motion/react';
-import { TrendingUp, Wind, ArrowUp } from 'lucide-react';
+import { TrendingUp, Wind } from 'lucide-react';
+import { useForecastsForSpot } from '@/lib/hooks/useForecastsForSpot';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-interface HourlyForecast {
-  time: string;
-  swellHeight: number;
-  swellPeriod: number;
-  windSpeed: number;
-  windDirection: string;
-  score: number;
+interface ForecastTimelineProps {
+  spotId: string;
+  nextHours?: number;
 }
 
-export function ForecastTimeline() {
-  const forecast: HourlyForecast[] = [
-    { time: '12h', swellHeight: 1.3, swellPeriod: 12, windSpeed: 12, windDirection: 'O', score: 8.5 },
-    { time: '13h', swellHeight: 1.4, swellPeriod: 12, windSpeed: 14, windDirection: 'O', score: 8.8 },
-    { time: '14h', swellHeight: 1.5, swellPeriod: 13, windSpeed: 15, windDirection: 'O', score: 9.0 },
-    { time: '15h', swellHeight: 1.6, swellPeriod: 13, windSpeed: 16, windDirection: 'OSO', score: 8.7 },
-    { time: '16h', swellHeight: 1.5, swellPeriod: 12, windSpeed: 14, windDirection: 'OSO', score: 8.5 },
-    { time: '17h', swellHeight: 1.4, swellPeriod: 12, windSpeed: 12, windDirection: 'SO', score: 8.0 },
-    { time: '18h', swellHeight: 1.3, swellPeriod: 11, windSpeed: 10, windDirection: 'SO', score: 7.8 },
-    { time: '19h', swellHeight: 1.2, swellPeriod: 11, windSpeed: 8, windDirection: 'SO', score: 7.5 },
-  ];
+export function ForecastTimeline({ spotId, nextHours = 8 }: ForecastTimelineProps) {
+  const { forecasts, loading, error } = useForecastsForSpot({
+    spotId,
+    nextHours,
+  });
 
-  const maxSwell = Math.max(...forecast.map(f => f.swellHeight));
+  // Use only the requested number of hours
+  const forecast = forecasts.slice(0, nextHours);
+
+  const maxSwell = forecast.length > 0 ? Math.max(...forecast.map(f => f.swellHeight)) : 1;
+
+  if (loading) {
+    return <LoadingSpinner message="Carregando previsão..." />;
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-2xl p-6 shadow-sm">
+        <div className="text-center text-red-500">Erro ao carregar previsão</div>
+      </div>
+    );
+  }
+
+  if (forecast.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl p-6 shadow-sm">
+        <div className="text-center text-gray-500">Nenhuma previsão disponível</div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-gray-900">Previsão por Hora</h2>
-        <span className="text-sm text-gray-500">Próximas 8 horas</span>
+        <span className="text-sm text-gray-500">Próximas {forecast.length} horas</span>
       </div>
 
       {/* Scrollable Timeline */}
@@ -38,7 +53,7 @@ export function ForecastTimeline() {
         <div className="flex gap-3 min-w-max">
           {forecast.map((hour, index) => (
             <motion.div
-              key={hour.time}
+              key={hour.id}
               className="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-xl p-4 min-w-[140px]"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -47,9 +62,9 @@ export function ForecastTimeline() {
             >
               {/* Time & Score */}
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-gray-900">{hour.time}</span>
+                <span className="text-sm text-gray-900">{hour.formattedTime}</span>
                 <div className="px-2 py-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-full text-xs">
-                  {hour.score}
+                  {hour.surfabilityScore.toFixed(1)}
                 </div>
               </div>
 
@@ -84,7 +99,7 @@ export function ForecastTimeline() {
                 <div className="flex items-center gap-1.5">
                   <Wind className="w-3 h-3 text-teal-600" />
                   <span className="text-xs text-gray-600">
-                    {hour.windSpeed} km/h {hour.windDirection}
+                    {hour.windSpeed} km/h {hour.windDirectionName}
                   </span>
                 </div>
               </div>

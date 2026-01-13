@@ -14,6 +14,10 @@ export const spotResolvers: GraphqlSpotResolvers = {
     );
   },
 
+  latestForecastForSpot: async (parent, _args, context) => {
+    return context.services.forecastService.findLatestForecastForSpot(parent.spotId);
+  },
+
   aiSummary: async (parent, args, context) => {
     if (args.timestamp) {
       return context.loaders.summaryLoader.load({

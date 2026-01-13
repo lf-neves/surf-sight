@@ -1,0 +1,10 @@
+query SearchSpots($query: String!) {
+  searchSpots(query: $query) {
+    id
+    name
+    slug
+    lat
+    lon
+    type
+  }
+}
