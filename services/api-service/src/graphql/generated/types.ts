@@ -8,6 +8,7 @@ export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: 
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
 export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type RequireFields<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: NonNullable<T[P]> };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
@@ -41,6 +42,12 @@ export type GraphqlAiSummary = {
   structured: Scalars['JSON']['output'];
   summary: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
+};
+
+export type GraphqlAuthPayload = {
+  __typename?: 'AuthPayload';
+  token: Scalars['String']['output'];
+  user: GraphqlUser;
 };
 
 export type GraphqlCreateAiSummaryInput = {
@@ -105,6 +112,11 @@ export type GraphqlForecast = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+export type GraphqlLoginInput = {
+  email: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+};
+
 export type GraphqlMutation = {
   __typename?: 'Mutation';
   _empty?: Maybe<Scalars['String']['output']>;
@@ -117,7 +129,13 @@ export type GraphqlMutation = {
   deleteForecast: Scalars['Boolean']['output'];
   deleteSpot: Scalars['Boolean']['output'];
   deleteUser: Scalars['Boolean']['output'];
+  generateAIInsights: GraphqlAiSummary;
+  login: GraphqlAuthPayload;
   removeFavorite: Scalars['Boolean']['output'];
+  requestForecastData: Scalars['Boolean']['output'];
+  requestPasswordReset: Scalars['Boolean']['output'];
+  resetPassword: Scalars['Boolean']['output'];
+  signup: GraphqlAuthPayload;
   updateFavorite: GraphqlFavoriteSpot;
   updateForecast: GraphqlForecast;
   updateSpot: GraphqlSpot;
@@ -171,8 +189,41 @@ export type GraphqlMutationDeleteUserArgs = {
 };
 
 
+export type GraphqlMutationGenerateAiInsightsArgs = {
+  spotId: Scalars['ID']['input'];
+};
+
+
+export type GraphqlMutationLoginArgs = {
+  input: GraphqlLoginInput;
+};
+
+
 export type GraphqlMutationRemoveFavoriteArgs = {
   spotId: Scalars['ID']['input'];
+};
+
+
+export type GraphqlMutationRequestForecastDataArgs = {
+  email: Scalars['String']['input'];
+  message?: InputMaybe<Scalars['String']['input']>;
+  spotId: Scalars['ID']['input'];
+};
+
+
+export type GraphqlMutationRequestPasswordResetArgs = {
+  email: Scalars['String']['input'];
+};
+
+
+export type GraphqlMutationResetPasswordArgs = {
+  newPassword: Scalars['String']['input'];
+  token: Scalars['String']['input'];
+};
+
+
+export type GraphqlMutationSignupArgs = {
+  input: GraphqlSignupInput;
 };
 
 
@@ -206,9 +257,9 @@ export type GraphqlQuery = {
   dbStatus: GraphqlDatabaseStatus;
   favorites: Array<GraphqlFavoriteSpot>;
   forecast?: Maybe<GraphqlForecast>;
-  forecastsForSpot: Array<GraphqlForecast>;
   isFavorite: Scalars['Boolean']['output'];
   latestAISummary?: Maybe<GraphqlAiSummary>;
+  latestForecastForSpot?: Maybe<GraphqlForecast>;
   me?: Maybe<GraphqlUser>;
   searchSpots: Array<GraphqlSpot>;
   spot?: Maybe<GraphqlSpot>;
@@ -230,12 +281,6 @@ export type GraphqlQueryForecastArgs = {
 };
 
 
-export type GraphqlQueryForecastsForSpotArgs = {
-  nextHours?: InputMaybe<Scalars['Int']['input']>;
-  spotId: Scalars['ID']['input'];
-};
-
-
 export type GraphqlQueryIsFavoriteArgs = {
   spotId: Scalars['ID']['input'];
 };
@@ -244,6 +289,11 @@ export type GraphqlQueryIsFavoriteArgs = {
 export type GraphqlQueryLatestAiSummaryArgs = {
   spotId: Scalars['ID']['input'];
   timestamp?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
+
+export type GraphqlQueryLatestForecastForSpotArgs = {
+  spotId: Scalars['ID']['input'];
 };
 
 
@@ -271,14 +321,20 @@ export type GraphqlQueryUserByEmailArgs = {
   email: Scalars['String']['input'];
 };
 
+export type GraphqlSignupInput = {
+  email: Scalars['String']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  password: Scalars['String']['input'];
+};
+
 export type GraphqlSpot = {
   __typename?: 'Spot';
   aiInsights?: Maybe<GraphqlAiInsights>;
   aiSummary?: Maybe<GraphqlAiSummary>;
   createdAt: Scalars['DateTime']['output'];
-  forecast: Array<GraphqlForecast>;
   id: Scalars['ID']['output'];
   lat: Scalars['Float']['output'];
+  latestForecastForSpot?: Maybe<GraphqlForecast>;
   lon: Scalars['Float']['output'];
   meta?: Maybe<Scalars['JSON']['output']>;
   name: Scalars['String']['output'];
@@ -295,11 +351,6 @@ export type GraphqlSpotAiInsightsArgs = {
 
 export type GraphqlSpotAiSummaryArgs = {
   timestamp?: InputMaybe<Scalars['DateTime']['input']>;
-};
-
-
-export type GraphqlSpotForecastArgs = {
-  nextHours?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export enum GraphqlSpotType {
@@ -435,6 +486,7 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 export type GraphqlResolversTypes = ResolversObject<{
   AIInsights: ResolverTypeWrapper<GraphqlAiInsights>;
   AISummary: ResolverTypeWrapper<AISummary>;
+  AuthPayload: ResolverTypeWrapper<Omit<GraphqlAuthPayload, 'user'> & { user: GraphqlResolversTypes['User'] }>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   CreateAISummaryInput: GraphqlCreateAiSummaryInput;
   CreateForecastInput: GraphqlCreateForecastInput;
@@ -448,8 +500,10 @@ export type GraphqlResolversTypes = ResolversObject<{
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   JSON: ResolverTypeWrapper<Scalars['JSON']['output']>;
+  LoginInput: GraphqlLoginInput;
   Mutation: ResolverTypeWrapper<{}>;
   Query: ResolverTypeWrapper<{}>;
+  SignupInput: GraphqlSignupInput;
   Spot: ResolverTypeWrapper<Spot>;
   SpotType: GraphqlSpotType;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
@@ -465,6 +519,7 @@ export type GraphqlResolversTypes = ResolversObject<{
 export type GraphqlResolversParentTypes = ResolversObject<{
   AIInsights: GraphqlAiInsights;
   AISummary: AISummary;
+  AuthPayload: Omit<GraphqlAuthPayload, 'user'> & { user: GraphqlResolversParentTypes['User'] };
   Boolean: Scalars['Boolean']['output'];
   CreateAISummaryInput: GraphqlCreateAiSummaryInput;
   CreateForecastInput: GraphqlCreateForecastInput;
@@ -478,8 +533,10 @@ export type GraphqlResolversParentTypes = ResolversObject<{
   ID: Scalars['ID']['output'];
   Int: Scalars['Int']['output'];
   JSON: Scalars['JSON']['output'];
+  LoginInput: GraphqlLoginInput;
   Mutation: {};
   Query: {};
+  SignupInput: GraphqlSignupInput;
   Spot: Spot;
   String: Scalars['String']['output'];
   Subscription: {};
@@ -509,6 +566,12 @@ export type GraphqlAiSummaryResolvers<ContextType = GraphQLContext, ParentType e
   structured?: Resolver<GraphqlResolversTypes['JSON'], ParentType, ContextType>;
   summary?: Resolver<GraphqlResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<GraphqlResolversTypes['DateTime'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
+export type GraphqlAuthPayloadResolvers<ContextType = GraphQLContext, ParentType extends GraphqlResolversParentTypes['AuthPayload'] = GraphqlResolversParentTypes['AuthPayload']> = ResolversObject<{
+  token?: Resolver<GraphqlResolversTypes['String'], ParentType, ContextType>;
+  user?: Resolver<GraphqlResolversTypes['User'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
@@ -562,7 +625,13 @@ export type GraphqlMutationResolvers<ContextType = GraphQLContext, ParentType ex
   deleteForecast?: Resolver<GraphqlResolversTypes['Boolean'], ParentType, ContextType, RequireFields<GraphqlMutationDeleteForecastArgs, 'id'>>;
   deleteSpot?: Resolver<GraphqlResolversTypes['Boolean'], ParentType, ContextType, RequireFields<GraphqlMutationDeleteSpotArgs, 'id'>>;
   deleteUser?: Resolver<GraphqlResolversTypes['Boolean'], ParentType, ContextType, RequireFields<GraphqlMutationDeleteUserArgs, 'id'>>;
+  generateAIInsights?: Resolver<GraphqlResolversTypes['AISummary'], ParentType, ContextType, RequireFields<GraphqlMutationGenerateAiInsightsArgs, 'spotId'>>;
+  login?: Resolver<GraphqlResolversTypes['AuthPayload'], ParentType, ContextType, RequireFields<GraphqlMutationLoginArgs, 'input'>>;
   removeFavorite?: Resolver<GraphqlResolversTypes['Boolean'], ParentType, ContextType, RequireFields<GraphqlMutationRemoveFavoriteArgs, 'spotId'>>;
+  requestForecastData?: Resolver<GraphqlResolversTypes['Boolean'], ParentType, ContextType, RequireFields<GraphqlMutationRequestForecastDataArgs, 'email' | 'spotId'>>;
+  requestPasswordReset?: Resolver<GraphqlResolversTypes['Boolean'], ParentType, ContextType, RequireFields<GraphqlMutationRequestPasswordResetArgs, 'email'>>;
+  resetPassword?: Resolver<GraphqlResolversTypes['Boolean'], ParentType, ContextType, RequireFields<GraphqlMutationResetPasswordArgs, 'newPassword' | 'token'>>;
+  signup?: Resolver<GraphqlResolversTypes['AuthPayload'], ParentType, ContextType, RequireFields<GraphqlMutationSignupArgs, 'input'>>;
   updateFavorite?: Resolver<GraphqlResolversTypes['FavoriteSpot'], ParentType, ContextType, RequireFields<GraphqlMutationUpdateFavoriteArgs, 'notifyWhatsapp' | 'spotId'>>;
   updateForecast?: Resolver<GraphqlResolversTypes['Forecast'], ParentType, ContextType, RequireFields<GraphqlMutationUpdateForecastArgs, 'id' | 'input'>>;
   updateSpot?: Resolver<GraphqlResolversTypes['Spot'], ParentType, ContextType, RequireFields<GraphqlMutationUpdateSpotArgs, 'id' | 'input'>>;
@@ -575,9 +644,9 @@ export type GraphqlQueryResolvers<ContextType = GraphQLContext, ParentType exten
   dbStatus?: Resolver<GraphqlResolversTypes['DatabaseStatus'], ParentType, ContextType>;
   favorites?: Resolver<Array<GraphqlResolversTypes['FavoriteSpot']>, ParentType, ContextType>;
   forecast?: Resolver<Maybe<GraphqlResolversTypes['Forecast']>, ParentType, ContextType, RequireFields<GraphqlQueryForecastArgs, 'id'>>;
-  forecastsForSpot?: Resolver<Array<GraphqlResolversTypes['Forecast']>, ParentType, ContextType, RequireFields<GraphqlQueryForecastsForSpotArgs, 'spotId'>>;
   isFavorite?: Resolver<GraphqlResolversTypes['Boolean'], ParentType, ContextType, RequireFields<GraphqlQueryIsFavoriteArgs, 'spotId'>>;
   latestAISummary?: Resolver<Maybe<GraphqlResolversTypes['AISummary']>, ParentType, ContextType, RequireFields<GraphqlQueryLatestAiSummaryArgs, 'spotId'>>;
+  latestForecastForSpot?: Resolver<Maybe<GraphqlResolversTypes['Forecast']>, ParentType, ContextType, RequireFields<GraphqlQueryLatestForecastForSpotArgs, 'spotId'>>;
   me?: Resolver<Maybe<GraphqlResolversTypes['User']>, ParentType, ContextType>;
   searchSpots?: Resolver<Array<GraphqlResolversTypes['Spot']>, ParentType, ContextType, RequireFields<GraphqlQuerySearchSpotsArgs, 'query'>>;
   spot?: Resolver<Maybe<GraphqlResolversTypes['Spot']>, ParentType, ContextType, RequireFields<GraphqlQuerySpotArgs, 'id'>>;
@@ -592,9 +661,9 @@ export type GraphqlSpotResolvers<ContextType = GraphQLContext, ParentType extend
   aiInsights?: Resolver<Maybe<GraphqlResolversTypes['AIInsights']>, ParentType, ContextType, Partial<GraphqlSpotAiInsightsArgs>>;
   aiSummary?: Resolver<Maybe<GraphqlResolversTypes['AISummary']>, ParentType, ContextType, Partial<GraphqlSpotAiSummaryArgs>>;
   createdAt?: Resolver<GraphqlResolversTypes['DateTime'], ParentType, ContextType>;
-  forecast?: Resolver<Array<GraphqlResolversTypes['Forecast']>, ParentType, ContextType, RequireFields<GraphqlSpotForecastArgs, 'nextHours'>>;
   id?: Resolver<GraphqlResolversTypes['ID'], ParentType, ContextType>;
   lat?: Resolver<GraphqlResolversTypes['Float'], ParentType, ContextType>;
+  latestForecastForSpot?: Resolver<Maybe<GraphqlResolversTypes['Forecast']>, ParentType, ContextType>;
   lon?: Resolver<GraphqlResolversTypes['Float'], ParentType, ContextType>;
   meta?: Resolver<Maybe<GraphqlResolversTypes['JSON']>, ParentType, ContextType>;
   name?: Resolver<GraphqlResolversTypes['String'], ParentType, ContextType>;
@@ -625,6 +694,7 @@ export type GraphqlUserResolvers<ContextType = GraphQLContext, ParentType extend
 export type GraphqlResolvers<ContextType = GraphQLContext> = ResolversObject<{
   AIInsights?: GraphqlAiInsightsResolvers<ContextType>;
   AISummary?: GraphqlAiSummaryResolvers<ContextType>;
+  AuthPayload?: GraphqlAuthPayloadResolvers<ContextType>;
   DatabaseStatus?: GraphqlDatabaseStatusResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
   FavoriteSpot?: GraphqlFavoriteSpotResolvers<ContextType>;

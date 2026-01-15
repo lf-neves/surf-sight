@@ -26,23 +26,58 @@ export interface ParsedForecast {
 
 /**
  * Parse a forecast's raw JSON data into a ForecastPoint
+ * Handles various forecast data formats from different sources
  */
 export function parseForecastRaw(raw: any): ForecastPoint {
   // Handle both string and object formats
-  const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
-  
+  let data: any;
+  try {
+    data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  } catch (e) {
+    // If parsing fails, try to use raw as-is or provide defaults
+    data = raw || {};
+  }
+
+  // Handle nested data structures (e.g., Stormglass format)
+  const waveData = data.waveHeight !== undefined ? data : (data.wave || data.swell || {});
+  const windData = data.windSpeed !== undefined ? data : (data.wind || {});
+  const tempData = data.waterTemperature !== undefined ? data : (data.temperature || {});
+
+  // Extract time - handle various formats
+  let time: Date;
+  if (data.time) {
+    time = new Date(data.time);
+  } else if (data.timestamp) {
+    time = new Date(data.timestamp);
+  } else {
+    time = new Date(); // Fallback to now
+  }
+
+  // Extract wave/swell data with fallbacks
+  const waveHeight = waveData.waveHeight || waveData.swellHeight || waveData.height || 0;
+  const wavePeriod = waveData.wavePeriod || waveData.swellPeriod || waveData.period || 0;
+  const waveDirection = waveData.waveDirection || waveData.swellDirection || waveData.direction || 0;
+
+  // Extract wind data
+  const windSpeed = windData.windSpeed || windData.speed || 0;
+  const windDirection = windData.windDirection || windData.direction || 0;
+
+  // Extract temperature data
+  const waterTemp = tempData.waterTemperature || tempData.water || tempData.seaTemperature;
+  const airTemp = tempData.airTemperature || tempData.air || tempData.airTemp;
+
   return {
-    time: new Date(data.time),
-    waveHeight: data.waveHeight || data.swellHeight || 0,
-    wavePeriod: data.wavePeriod || data.swellPeriod || 0,
-    waveDirection: data.waveDirection || data.swellDirection || 0,
-    windSpeed: data.windSpeed || 0,
-    windDirection: data.windDirection || 0,
-    waterTemperature: data.waterTemperature,
-    airTemperature: data.airTemperature,
-    swellHeight: data.swellHeight || data.waveHeight,
-    swellPeriod: data.swellPeriod || data.wavePeriod,
-    swellDirection: data.swellDirection || data.waveDirection,
+    time,
+    waveHeight: waveHeight || 0,
+    wavePeriod: wavePeriod || 0,
+    waveDirection: waveDirection || 0,
+    windSpeed: windSpeed || 0,
+    windDirection: windDirection || 0,
+    waterTemperature: waterTemp,
+    airTemperature: airTemp,
+    swellHeight: waveHeight || 0,
+    swellPeriod: wavePeriod || 0,
+    swellDirection: waveDirection || 0,
   };
 }
 

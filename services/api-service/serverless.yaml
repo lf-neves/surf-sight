@@ -12,6 +12,11 @@ provider:
     NODE_ENV: production
     DATABASE_URL: ${env:DATABASE_URL, ''}
     JWT_SECRET: ${env:JWT_SECRET, ''}
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
+    TYPESENSE_HOST: ${env:TYPESENSE_HOST, 'localhost'}
+    TYPESENSE_PORT: ${env:TYPESENSE_PORT, '8108'}
+    TYPESENSE_PROTOCOL: ${env:TYPESENSE_PROTOCOL, 'http'}
+    TYPESENSE_API_KEY: ${env:TYPESENSE_API_KEY, 'xyz'}
   vpc:
     securityGroupIds:
       - sg-0c60124c86ca3bc22

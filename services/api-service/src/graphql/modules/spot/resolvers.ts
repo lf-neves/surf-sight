@@ -2,17 +2,10 @@ import {
   GraphqlSpotResolvers,
   GraphqlQueryResolvers,
   GraphqlMutationResolvers,
-} from '../../generated/types';
+} from '../../generated/types.js';
 
 export const spotResolvers: GraphqlSpotResolvers = {
   id: (parent) => parent.spotId,
-
-  forecast: async (parent, args, context) => {
-    return context.services.forecastService.findForSpot(
-      parent.spotId,
-      args.nextHours || undefined
-    );
-  },
 
   latestForecastForSpot: async (parent, _args, context) => {
     return context.services.forecastService.findLatestForecastForSpot(parent.spotId);

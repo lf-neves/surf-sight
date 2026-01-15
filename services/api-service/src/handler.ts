@@ -29,12 +29,14 @@ const server = new ApolloServer({
     // For non-user-facing errors, return them as-is (raw errors)
     // The Next.js middleware/client will convert them to user-facing errors
     logger.error('GraphQL Error:', formattedError);
-    
+
     return {
       message: formattedError.message,
       extensions: {
         code: formattedError.extensions?.code || 'INTERNAL_ERROR',
-        statusCode: formattedError.extensions?.statusCode || HttpStatusCode.INTERNAL_SERVER_ERROR,
+        statusCode:
+          formattedError.extensions?.statusCode ||
+          HttpStatusCode.INTERNAL_SERVER_ERROR,
         isUserFacing: false,
         ...(process.env.NODE_ENV === 'development' && {
           stack: formattedError.extensions?.stack,

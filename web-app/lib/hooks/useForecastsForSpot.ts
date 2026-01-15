@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useAppSelector } from '@/lib/store/hooks';
 import { useForecastsForSpotQuery } from '@/lib/graphql/generated/apollo-graphql-hooks';
 import {
   parseForecastRaw,
@@ -53,11 +54,22 @@ export function useForecastsForSpot({
   });
 
   const forecasts = useMemo<TransformedForecast[]>(() => {
-    if (!data?.forecastsForSpot) {
+    if (!data?.forecast || skip || !spotId) {
       return [];
     }
 
-    return data.forecastsForSpot.map((f) => {
+    // Filter forecasts by nextHours if specified
+    let filteredForecasts = data.forecast;
+    if (nextHours) {
+      const now = new Date();
+      const cutoff = new Date(now.getTime() + nextHours * 60 * 60 * 1000);
+      filteredForecasts = spot.forecast.filter((f) => {
+        const timestamp = new Date(f.timestamp);
+        return timestamp <= cutoff;
+      });
+    }
+
+    return filteredForecasts.map((f) => {
       const timestamp = new Date(f.timestamp);
       const parsed = parseForecastRaw(f.raw);
 
@@ -89,7 +101,7 @@ export function useForecastsForSpot({
         updatedAt: new Date(f.updatedAt),
       };
     });
-  }, [data?.forecastsForSpot]);
+  }, [data?.forecast, nextHours, skip, spotId]);
 
   const latestForecast = useMemo(() => {
     return forecasts.length > 0 ? forecasts[0] : null;

@@ -11,7 +11,7 @@ import { createForecastLoader } from './loaders/forecastLoader';
 import { createSummaryLoader } from './loaders/summaryLoader';
 import { pubsub } from './pubsub';
 import { env } from './env';
-import { TypesenseService } from './services/TypesenseService';
+import { OpenAIService } from './services/OpenAIService';
 
 export interface User {
   userId: string;
@@ -35,45 +35,12 @@ export interface GraphQLContext {
   user: User | null;
 }
 
-// Initialize Typesense service (singleton)
-let typesenseService: TypesenseService | undefined;
-
-async function initializeTypesense(): Promise<TypesenseService | undefined> {
-  try {
-    const service = new TypesenseService();
-    await service.initializeCollection();
-    
-    // Sync existing spots to Typesense on first initialization
-    const spots = await prismaClient.spot.findMany();
-    if (spots.length > 0) {
-      logger.info(`Syncing ${spots.length} spots to Typesense...`);
-      await service.indexSpots(spots);
-      logger.info('Spots synced to Typesense successfully');
-    }
-    
-    return service;
-  } catch (error) {
-    logger.warn('Typesense initialization failed, search will fallback to Prisma:', error);
-    return undefined;
-  }
-}
-
-// Initialize Typesense on module load (non-blocking)
-if (env.typesense.apiKey && env.typesense.apiKey !== 'xyz') {
-  initializeTypesense()
-    .then((service) => {
-      typesenseService = service;
-    })
-    .catch((error) => {
-      logger.warn('Failed to initialize Typesense:', error);
-    });
-}
-
 export function createContext(user: User | null = null): GraphQLContext {
   // Initialize services
-  const spotService = new SpotService(prismaClient, typesenseService);
+  const spotService = new SpotService(prismaClient);
   const forecastService = new ForecastService(prismaClient);
-  const aiSummaryService = new AISummaryService(prismaClient);
+  const openAIService = new OpenAIService();
+  const aiSummaryService = new AISummaryService(prismaClient, openAIService);
   const userService = new UserService(prismaClient);
   const favoriteSpotService = new FavoriteSpotService(prismaClient);
 

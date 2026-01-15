@@ -1,4 +1,4 @@
-query SpotWithForecast($id: ID!, $nextHours: Int) {
+query SpotWithForecast($id: ID!) {
   spot(id: $id) {
     id
     name
@@ -16,14 +16,12 @@ query SpotWithForecast($id: ID!, $nextHours: Int) {
       createdAt
       updatedAt
     }
-    forecast(nextHours: $nextHours) {
-      id
-      spotId
-      timestamp
-      raw
-      source
-      createdAt
-      updatedAt
+    aiInsights {
+      conditions
+      skillLevel
+      recommendations
+      risks
+      rating
     }
   }
 }

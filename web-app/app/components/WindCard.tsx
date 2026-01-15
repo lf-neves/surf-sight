@@ -3,62 +3,65 @@
 import { motion } from 'motion/react';
 import { Wind, ArrowUp } from 'lucide-react';
 import { useState } from 'react';
-import { useLatestForecastForSpotQuery } from '@/lib/graphql/generated/apollo-graphql-hooks';
+import { useAppSelector } from '@/lib/store/hooks';
+import { useSpotWithForecastQuery } from '@/lib/graphql/generated/apollo-graphql-hooks';
 import {
   parseForecastRaw,
   windSpeedToKmh,
   degreesToDirection,
 } from '@/lib/utils/forecast';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Card, AnimatedCard } from '@/components/ui/card';
+import { CardHeader } from '@/components/ui/card-header';
+import { CardContent } from '@/components/ui/card-content';
+import { NoDataMessage } from './NoDataMessage';
 
-interface WindCardProps {
-  spotId: string;
-}
-
-export function WindCard({ spotId }: WindCardProps) {
+export function WindCard() {
   const [isHovering, setIsHovering] = useState(false);
-  const { data, loading } = useLatestForecastForSpotQuery({
-    variables: { spotId },
-    skip: !spotId,
+  const selectedSpot = useAppSelector((state) => state.spot.selectedSpot);
+  
+  const { data } = useSpotWithForecastQuery({
+    variables: { id: selectedSpot?.id || '' },
+    skip: !selectedSpot?.id,
   });
+  
+  if (!selectedSpot) {
+    return null;
+  }
 
   // Get the latest forecast
-  const latestForecast = data?.latestForecastForSpot;
+  const latestForecast = data?.spot?.latestForecastForSpot;
   const parsed = latestForecast ? parseForecastRaw(latestForecast.raw) : null;
 
-  const windSpeed = parsed ? Math.round(windSpeedToKmh(parsed.windSpeed)) : 12;
-  const windDirection = parsed?.windDirection || 270;
-  const directionName = parsed ? degreesToDirection(parsed.windDirection) : 'Oeste';
+  if (!parsed || !latestForecast || parsed.windSpeed === undefined || parsed.windDirection === undefined) {
+    return (
+      <Card>
+        <NoDataMessage message="Dados de vento não disponíveis" />
+      </Card>
+    );
+  }
+
+  const windSpeed = Math.round(windSpeedToKmh(parsed.windSpeed));
+  const windDirection = parsed.windDirection;
+  const directionName = degreesToDirection(parsed.windDirection);
   
   // Simplified: assume offshore if wind is from west (270°) - this should be based on spot orientation
   const isOffshore = windDirection >= 250 && windDirection <= 290;
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
   return (
-    <motion.div
-      className={`rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all cursor-pointer ${
-        isOffshore 
-          ? 'bg-gradient-to-br from-teal-50 to-cyan-50' 
-          : 'bg-gradient-to-br from-orange-50 to-red-50'
-      }`}
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: 0.2 }}
-      whileHover={{ y: -4, scale: 1.02 }}
+    <AnimatedCard
+      variant="gradient"
+      hoverable
+      delay={0.2}
+      gradient={isOffshore ? 'from-teal-50 to-cyan-50' : 'from-orange-50 to-red-50'}
       onHoverStart={() => setIsHovering(true)}
       onHoverEnd={() => setIsHovering(false)}
     >
-      <div className="flex items-center gap-2 mb-6">
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-          isOffshore ? 'bg-white/80' : 'bg-white/80'
-        }`}>
-          <Wind className={`w-4 h-4 ${isOffshore ? 'text-teal-600' : 'text-orange-600'}`} />
-        </div>
-        <h3 className="text-gray-900">Vento</h3>
-      </div>
+      <CardHeader 
+        icon={Wind} 
+        title="Vento"
+        iconGradient="from-white/80 to-white/80"
+        iconColor={isOffshore ? 'teal-600' : 'orange-600'}
+      />
 
       {/* Wind Arrow */}
       <div className="flex items-center justify-center mb-6">
@@ -83,7 +86,7 @@ export function WindCard({ spotId }: WindCardProps) {
       </div>
 
       {/* Wind Details */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4">
+      <CardContent variant="glass">
         <div className="flex items-baseline gap-2 mb-2">
           <span className="text-3xl text-gray-900">{windSpeed}</span>
           <span className="text-gray-600">km/h</span>
@@ -98,7 +101,7 @@ export function WindCard({ spotId }: WindCardProps) {
         }`}>
           {isOffshore ? '✓ Offshore' : 'Onshore'}
         </div>
-      </div>
+      </CardContent>
 
       <motion.div 
         className="mt-3 text-xs text-center"
@@ -116,6 +119,6 @@ export function WindCard({ spotId }: WindCardProps) {
             : 'Melhor para longboard'}
         </div>
       </motion.div>
-    </motion.div>
+    </AnimatedCard>
   );
 }

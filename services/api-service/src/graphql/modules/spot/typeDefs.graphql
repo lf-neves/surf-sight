@@ -8,7 +8,6 @@ type Spot {
   meta: JSON
   createdAt: DateTime!
   updatedAt: DateTime!
-  forecast(nextHours: Int = 24): [Forecast!]!
   latestForecastForSpot: Forecast
   aiSummary(timestamp: DateTime): AISummary
   aiInsights(timestamp: DateTime): AIInsights
@@ -32,6 +31,7 @@ extend type Mutation {
   createSpot(input: CreateSpotInput!): Spot!
   updateSpot(id: ID!, input: UpdateSpotInput!): Spot!
   deleteSpot(id: ID!): Boolean!
+  requestForecastData(spotId: ID!, email: String!, message: String): Boolean!
 }
 
 input CreateSpotInput {

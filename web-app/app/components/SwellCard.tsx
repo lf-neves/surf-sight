@@ -3,53 +3,64 @@
 import { motion } from 'motion/react';
 import { TrendingUp, ArrowDown } from 'lucide-react';
 import { useState } from 'react';
-import { useLatestForecastForSpotQuery } from '@/lib/graphql/generated/apollo-graphql-hooks';
+import { useAppSelector } from '@/lib/store/hooks';
+import { useSpotWithForecastQuery } from '@/lib/graphql/generated/apollo-graphql-hooks';
 import {
   parseForecastRaw,
   degreesToDirection,
 } from '@/lib/utils/forecast';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Card, AnimatedCard } from '@/components/ui/card';
+import { CardHeader } from '@/components/ui/card-header';
+import { CardContent } from '@/components/ui/card-content';
+import { NoDataMessage } from './NoDataMessage';
 
-interface SwellCardProps {
-  spotId: string;
-}
-
-export function SwellCard({ spotId }: SwellCardProps) {
+export function SwellCard() {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { data, loading } = useLatestForecastForSpotQuery({
-    variables: { spotId },
-    skip: !spotId,
+  const selectedSpot = useAppSelector((state) => state.spot.selectedSpot);
+  
+  const { data } = useSpotWithForecastQuery({
+    variables: { id: selectedSpot?.id || '' },
+    skip: !selectedSpot?.id,
   });
+  
+  if (!selectedSpot) {
+    return null;
+  }
 
   // Get the latest forecast
-  const latestForecast = data?.latestForecastForSpot;
+  const latestForecast = data?.spot?.latestForecastForSpot;
   const parsed = latestForecast ? parseForecastRaw(latestForecast.raw) : null;
 
-  const swellHeight = parsed?.swellHeight || parsed?.waveHeight || 1.3;
-  const swellPeriod = parsed?.swellPeriod || parsed?.wavePeriod || 12;
-  const swellDirection = parsed?.swellDirection || parsed?.waveDirection || 112.5;
+  if (!parsed || !latestForecast) {
+    return (
+      <Card>
+        <NoDataMessage message="Dados de swell não disponíveis" />
+      </Card>
+    );
+  }
+
+  const swellHeight = parsed.swellHeight || parsed.waveHeight;
+  const swellPeriod = parsed.swellPeriod || parsed.wavePeriod;
+  const swellDirection = parsed.swellDirection || parsed.waveDirection;
+
+  if (!swellHeight || !swellPeriod || swellDirection === undefined) {
+    return (
+      <Card>
+        <NoDataMessage message="Dados de swell não disponíveis" />
+      </Card>
+    );
+  }
+
   const directionDegrees = swellDirection;
   const directionName = degreesToDirection(swellDirection);
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
   return (
-    <motion.div
-      className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all cursor-pointer"
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: 0.1 }}
-      whileHover={{ y: -4 }}
+    <AnimatedCard
+      hoverable
+      delay={0.1}
       onClick={() => setIsExpanded(!isExpanded)}
     >
-      <div className="flex items-center gap-2 mb-6">
-        <div className="w-8 h-8 bg-gradient-to-br from-cyan-100 to-blue-100 rounded-lg flex items-center justify-center">
-          <TrendingUp className="w-4 h-4 text-cyan-600" />
-        </div>
-        <h3 className="text-gray-900">Ondulação</h3>
-      </div>
+      <CardHeader icon={TrendingUp} title="Ondulação" />
 
       {/* Direction Compass */}
       <div className="flex items-center justify-center mb-6">
@@ -75,32 +86,26 @@ export function SwellCard({ spotId }: SwellCardProps) {
       </div>
 
       {/* Primary Swell */}
-      <motion.div 
-        className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl p-4 mb-3"
-        whileHover={{ scale: 1.02 }}
-      >
-        <div className="text-xs text-gray-500 mb-1">Swell Principal</div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl text-gray-900">{swellHeight.toFixed(1)}m</span>
-          <span className="text-gray-600">@ {swellPeriod}s</span>
-        </div>
-        <div className="text-sm text-cyan-600 mt-1">{directionName} ({Math.round(directionDegrees)}°)</div>
-        <div className="text-xs text-green-600 mt-2 flex items-center gap-1">
-          ✓ <span>Potente & Organizada</span>
-        </div>
+      <motion.div whileHover={{ scale: 1.02 }} className="mb-3">
+        <CardContent variant="gradient" gradient="from-cyan-50 to-blue-50">
+          <div className="text-xs text-gray-500 mb-1">Swell Principal</div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl text-gray-900">{swellHeight.toFixed(1)}m</span>
+            <span className="text-gray-600">@ {swellPeriod}s</span>
+          </div>
+          <div className="text-sm text-cyan-600 mt-1">{directionName} ({Math.round(directionDegrees)}°)</div>
+          <div className="text-xs text-green-600 mt-2 flex items-center gap-1">
+            ✓ <span>Potente & Organizada</span>
+          </div>
+        </CardContent>
       </motion.div>
 
-      {/* Secondary Swell */}
-      <motion.div 
-        className="bg-gray-50 rounded-xl p-4"
-        whileHover={{ scale: 1.02 }}
-      >
-        <div className="text-xs text-gray-500 mb-1">Swell Secundário</div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-gray-900">0.8m</span>
-          <span className="text-gray-600 text-sm">@ 8s</span>
-        </div>
-        <div className="text-sm text-gray-600 mt-1">S (180°)</div>
+      {/* Secondary Swell - Show only if we have data, otherwise show message */}
+      <motion.div whileHover={{ scale: 1.02 }}>
+        <CardContent variant="gradient" gradient="from-gray-50 to-gray-50">
+          <div className="text-xs text-gray-500 mb-1">Swell Secundário</div>
+          <div className="text-sm text-gray-500 italic">Não disponível nos dados atuais</div>
+        </CardContent>
       </motion.div>
 
       {/* Expandable Details */}
@@ -113,15 +118,17 @@ export function SwellCard({ spotId }: SwellCardProps) {
         <div className="mt-4 pt-4 border-t border-gray-100 space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-gray-500">Parede da Onda:</span>
-            <span className="text-gray-900">1.8 - 2.1m</span>
+            <span className="text-gray-900">~{(swellHeight * 1.5).toFixed(1)}m</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">Séries:</span>
-            <span className="text-gray-900">A cada 10-12 min</span>
+            <span className="text-gray-900">A cada {Math.round(swellPeriod * 0.8)}-{Math.round(swellPeriod * 1.2)} min</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">Qualidade:</span>
-            <span className="text-green-600">Excelente</span>
+            <span className="text-green-600">
+              {swellPeriod >= 12 ? 'Excelente' : swellPeriod >= 10 ? 'Boa' : 'Regular'}
+            </span>
           </div>
         </div>
       </motion.div>
@@ -129,6 +136,6 @@ export function SwellCard({ spotId }: SwellCardProps) {
       <div className="text-xs text-center text-gray-400 mt-3">
         {isExpanded ? '↑ Clique para recolher' : '↓ Clique para detalhes'}
       </div>
-    </motion.div>
+    </AnimatedCard>
   );
 }

@@ -66,12 +66,21 @@ pnpm install
 pnpm codegen
 ```
 
-3. Create `.env` file (copy from `.env.example`):
+3. Create `.env` file in the `services/api-service/` directory:
 ```bash
 DATABASE_URL=postgresql://postgres:password@localhost:5432/surf-app?schema=public
 JWT_SECRET=your-secret-key-here
 PORT=4000
+OPENAI_API_KEY=sk-your-actual-openai-api-key-here
 ```
+
+**Getting an OpenAI API Key:**
+1. Go to https://platform.openai.com/api-keys
+2. Sign in or create an account
+3. Click "Create new secret key"
+4. Copy the key and add it to your `.env` file as `OPENAI_API_KEY`
+
+**Note:** The OpenAI API key is optional. If not set, AI insights generation will be disabled, but the rest of the API will work normally.
 
 4. Start the server:
 ```bash
