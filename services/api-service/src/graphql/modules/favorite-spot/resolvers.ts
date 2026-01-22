@@ -92,9 +92,8 @@ export const favoriteMutationResolvers: GraphqlMutationResolvers = {
 
 export const favoriteSubscriptionResolvers: GraphqlSubscriptionResolvers = {
   favoriteUpdated: {
-    // @ts-expect-error this is a workaround to avoid type errors
     subscribe: async (_parent, _args, context) => {
-      return context.pubsub.asyncIterator([FAVORITE_UPDATED]);
+      return context.pubsub.asyncIterator([FAVORITE_UPDATED]) as any;
     },
     resolve: (payload: any) => payload.favoriteUpdated,
   },

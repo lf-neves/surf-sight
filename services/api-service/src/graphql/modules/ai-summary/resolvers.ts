@@ -60,4 +60,12 @@ export const aiMutationResolvers: GraphqlMutationResolvers = {
     await context.services.aiSummaryService.delete(args.id);
     return true;
   },
+
+  generateAIInsights: async (_parent: any, args: any, context: any) => {
+    return context.services.aiSummaryService.generateInsightsForLatestForecast(
+      args.spotId,
+      context.services.forecastService,
+      context.services.spotService
+    );
+  },
 };

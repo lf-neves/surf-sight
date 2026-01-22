@@ -1,9 +1,10 @@
-import { PrismaClient, User } from '@prisma/client';
+import { drizzleDb, users, User } from '@surf-sight/database';
 import { hashPassword, comparePassword } from './password';
 import { generateToken } from './jwt';
 import { randomBytes } from 'crypto';
 import { UserFacingError } from '../errors';
 import { HttpStatusCode } from '@surf-sight/core';
+import { eq, gt, and } from 'drizzle-orm';
 
 export interface LoginInput {
   email: string;
@@ -22,18 +23,20 @@ export interface AuthResult {
 }
 
 export class AuthService {
-  constructor(private prisma: PrismaClient) {}
+  constructor(private db: typeof drizzleDb) {}
 
   /**
    * Signs up a new user
    */
   async signup(input: SignupInput): Promise<AuthResult> {
     // Check if user already exists
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: input.email },
-    });
+    const existingUsers = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.email, input.email))
+      .limit(1);
 
-    if (existingUser) {
+    if (existingUsers.length > 0) {
       throw new UserFacingError(
         'A user with this email already exists.',
         'EMAIL_ALREADY_EXISTS',
@@ -45,13 +48,16 @@ export class AuthService {
     const hashedPassword = await hashPassword(input.password);
 
     // Create user
-    const user = await this.prisma.user.create({
-      data: {
+    const result = await this.db
+      .insert(users)
+      .values({
         email: input.email,
         password: hashedPassword,
         name: input.name,
-      },
-    });
+      })
+      .returning();
+    
+    const user = result[0];
 
     // Generate token
     const token = generateToken({
@@ -73,9 +79,13 @@ export class AuthService {
    */
   async login(input: LoginInput): Promise<AuthResult> {
     // Find user by email
-    const user = await this.prisma.user.findUnique({
-      where: { email: input.email },
-    });
+    const result = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.email, input.email))
+      .limit(1);
+
+    const user = result[0];
 
     if (!user) {
       throw new UserFacingError(
@@ -118,9 +128,13 @@ export class AuthService {
    * Initiates password reset by generating a reset token
    */
   async requestPasswordReset(email: string): Promise<{ success: boolean }> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    });
+    const result = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+
+    const user = result[0];
 
     if (!user) {
       // Don't reveal if user exists for security
@@ -132,13 +146,13 @@ export class AuthService {
     const resetTokenExpiry = new Date();
     resetTokenExpiry.setHours(resetTokenExpiry.getHours() + 1); // Token expires in 1 hour
 
-    await this.prisma.user.update({
-      where: { userId: user.userId },
-      data: {
+    await this.db
+      .update(users)
+      .set({
         resetToken,
         resetTokenExpiry,
-      },
-    });
+      })
+      .where(eq(users.userId, user.userId));
 
     // TODO: Send email with reset token
     // For now, we'll just return success
@@ -154,14 +168,19 @@ export class AuthService {
     token: string,
     newPassword: string
   ): Promise<{ success: boolean }> {
-    const user = await this.prisma.user.findFirst({
-      where: {
-        resetToken: token,
-        resetTokenExpiry: {
-          gt: new Date(), // Token must not be expired
-        },
-      },
-    });
+    const now = new Date();
+    const result = await this.db
+      .select()
+      .from(users)
+      .where(
+        and(
+          eq(users.resetToken, token),
+          gt(users.resetTokenExpiry, now) // Token must not be expired
+        )
+      )
+      .limit(1);
+
+    const user = result[0];
 
     if (!user) {
       throw new UserFacingError(
@@ -175,14 +194,14 @@ export class AuthService {
     const hashedPassword = await hashPassword(newPassword);
 
     // Update user password and clear reset token
-    await this.prisma.user.update({
-      where: { userId: user.userId },
-      data: {
+    await this.db
+      .update(users)
+      .set({
         password: hashedPassword,
         resetToken: null,
         resetTokenExpiry: null,
-      },
-    });
+      })
+      .where(eq(users.userId, user.userId));
 
     return { success: true };
   }

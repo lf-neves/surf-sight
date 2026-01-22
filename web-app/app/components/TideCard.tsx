@@ -3,16 +3,11 @@
 import { motion } from 'motion/react';
 import { Droplets } from 'lucide-react';
 import { useState } from 'react';
+import { AnimatedCard } from '@/components/ui/card';
+import { CardHeader } from '@/components/ui/card-header';
 
-interface TideCardProps {
-  spotId: string;
-}
-
-export function TideCard({ spotId }: TideCardProps) {
+export function TideCard() {
   const [isHovering, setIsHovering] = useState(false);
-  
-  // Note: Tide data is typically not available in forecast data
-  // This would need to come from a separate tide API
 
   // Mock tide data (height in meters)
   const tideData = [
@@ -30,21 +25,13 @@ export function TideCard({ spotId }: TideCardProps) {
   const maxHeight = 2.0;
 
   return (
-    <motion.div
-      className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all cursor-pointer"
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: 0.3 }}
-      whileHover={{ y: -4, scale: 1.02 }}
+    <AnimatedCard
+      hoverable
+      delay={0.3}
       onHoverStart={() => setIsHovering(true)}
       onHoverEnd={() => setIsHovering(false)}
     >
-      <div className="flex items-center gap-2 mb-6">
-        <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-lg flex items-center justify-center">
-          <Droplets className="w-4 h-4 text-blue-600" />
-        </div>
-        <h3 className="text-gray-900">Maré</h3>
-      </div>
+      <CardHeader icon={Droplets} title="Maré" iconGradient="from-blue-100 to-cyan-100" />
 
       {/* Tide Curve */}
       <div className="relative h-32 mb-4">
@@ -188,6 +175,6 @@ export function TideCard({ spotId }: TideCardProps) {
           🎯 <strong>Melhor Horário:</strong> Em 30 minutos (maré alta)
         </div>
       </motion.div>
-    </motion.div>
+    </AnimatedCard>
   );
 }

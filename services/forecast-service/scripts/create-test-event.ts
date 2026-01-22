@@ -8,16 +8,19 @@
  * This will create a test event and output the event ID to use in events/sqs-event.json
  */
 
-import { prismaClient } from '@surf-sight/database';
+import { drizzleDb, spots, forecastServiceEvents } from '@surf-sight/database';
+import { asc, eq } from 'drizzle-orm';
 
 async function createTestEvent() {
   try {
     // Get the first spot from the database
-    const spot = await prismaClient.spot.findFirst({
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
+    const spotResults = await drizzleDb
+      .select()
+      .from(spots)
+      .orderBy(asc(spots.createdAt))
+      .limit(1);
+
+    const spot = spotResults[0];
 
     if (!spot) {
       console.error('❌ No spots found in database. Please seed the database first.');
@@ -49,20 +52,27 @@ async function createTestEvent() {
     };
 
     // Create a test event with minimal payload
-    const testEvent = await prismaClient.forecastServiceEvent.create({
-      data: {
+    const [testEvent] = await drizzleDb
+      .insert(forecastServiceEvents)
+      .values({
         eventType: 'FORECASTS_UPDATE_ENQUEUED',
         payload: payload,
         enqueuerAwsRequestId: 'test-enqueuer-id',
-      },
-    });
+      })
+      .returning();
+
+    if (!testEvent) {
+      throw new Error('Failed to create test event');
+    }
 
     // Verify the payload was stored correctly
-    const retrievedEvent = await prismaClient.forecastServiceEvent.findUnique({
-      where: {
-        forecastServiceEventId: testEvent.forecastServiceEventId,
-      },
-    });
+    const retrievedEventResults = await drizzleDb
+      .select()
+      .from(forecastServiceEvents)
+      .where(eq(forecastServiceEvents.forecastServiceEventId, testEvent.forecastServiceEventId))
+      .limit(1);
+
+    const retrievedEvent = retrievedEventResults[0];
 
     if (!retrievedEvent) {
       throw new Error('Failed to retrieve created event');
@@ -88,8 +98,6 @@ async function createTestEvent() {
   } catch (error) {
     console.error('❌ Error creating test event:', error);
     process.exit(1);
-  } finally {
-    await prismaClient.$disconnect();
   }
 }
 

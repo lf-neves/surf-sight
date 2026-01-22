@@ -3,6 +3,8 @@ import {
   GraphqlQueryResolvers,
   GraphqlMutationResolvers,
 } from '../../generated/types';
+import { hashPassword } from '../../../auth/password';
+import { randomBytes } from 'crypto';
 
 export const userResolvers: GraphqlUserResolvers = {
   id: (parent) => parent.userId,
@@ -39,8 +41,21 @@ export const userMutationResolvers: GraphqlMutationResolvers = {
       throw new Error('Input is required');
     }
 
+    // Note: This mutation creates a user without a password (for admin use)
+    // Regular user creation should use AuthService.signup which handles password hashing
+    // For this mutation, we'll create a user with a placeholder password that must be reset
+    // In production, you might want to require password or remove this mutation entirely
+    
+    // Generate a random password that must be reset (user can't login with this)
+    const randomPassword = randomBytes(32).toString('hex');
+    const hashedPassword = await hashPassword(randomPassword);
+
     const user = await context.services.userService.create({
       email: args.input.email,
+      password: hashedPassword, // Random password - user must reset it
+      name: args.input.name || undefined,
+      phone: args.input.phone || undefined,
+      skillLevel: args.input.skillLevel || undefined,
     });
 
     if (!user) {

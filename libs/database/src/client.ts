@@ -1,7 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-function createPrismaClient() {
-  return new PrismaClient();
-}
-
-export const prismaClient = createPrismaClient();
+// Drizzle client - replaces PrismaClient
+export { drizzleDb as prismaClient } from './drizzle/client';
+// Re-export for backward compatibility during migration
+export { drizzleDb } from './drizzle/client';

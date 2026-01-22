@@ -32,7 +32,7 @@ try {
   // Add the react imports after the gql import
   content = content.replace(
     /(import\s+\{\s*gql\s*\}\s+from\s+['"]@apollo\/client['"];)/,
-    "$1\nimport { useQuery, useLazyQuery, useSuspenseQuery, skipToken } from '@apollo/client/react';"
+    "$1\nimport { useQuery, useLazyQuery, useSuspenseQuery, useMutation, skipToken } from '@apollo/client/react';"
   );
 
   // Step 2: Add custom type definitions after the Apollo namespace import
@@ -53,7 +53,7 @@ try {
   // Add type definitions after Apollo import
   content = content.replace(
     /(import\s+\*\s+as\s+Apollo\s+from\s+['"]@apollo\/client['"];)/,
-    '$1\n\ntype QueryHookOptions<TData, TVariables> = any;\ntype LazyQueryHookOptions<TData, TVariables> = any;\ntype SuspenseQueryHookOptions<TData, TVariables> = any;'
+    '$1\n\ntype QueryHookOptions<TData, TVariables> = any;\ntype LazyQueryHookOptions<TData, TVariables> = any;\ntype SuspenseQueryHookOptions<TData, TVariables> = any;\ntype MutationHookOptions<TData, TVariables> = any;'
   );
 
   // Step 3: Replace ALL Apollo.* references with direct references
@@ -67,6 +67,9 @@ try {
 
   // Replace Apollo.useSuspenseQuery -> useSuspenseQuery
   content = content.replace(/Apollo\.useSuspenseQuery/g, 'useSuspenseQuery');
+
+  // Replace Apollo.useMutation -> useMutation
+  content = content.replace(/Apollo\.useMutation/g, 'useMutation');
 
   // Replace Apollo.skipToken -> skipToken
   content = content.replace(/Apollo\.skipToken/g, 'skipToken');
@@ -84,6 +87,38 @@ try {
   content = content.replace(
     /Apollo\.SuspenseQueryHookOptions/g,
     'SuspenseQueryHookOptions'
+  );
+
+  // Replace Apollo.MutationHookOptions -> MutationHookOptions
+  content = content.replace(/Apollo\.MutationHookOptions/g, 'MutationHookOptions');
+
+  // Replace Apollo.MutationResult -> ReturnType<typeof useMutation>
+  // This is a bit tricky - we'll use a pattern that matches the mutation name
+  content = content.replace(
+    /export type (\w+MutationResult) = Apollo\.MutationResult<(\w+)>;/g,
+    (match, typeName, mutationType) => {
+      // Extract base name: LoginMutationResult -> Login
+      const baseName = typeName.replace(/MutationResult$/, '');
+      const hookName = `use${baseName}Mutation`;
+      return `export type ${typeName} = ReturnType<typeof ${hookName}>[1];`;
+    }
+  );
+
+  // Replace Apollo.BaseMutationOptions -> any (simplified, but ensure we don't create invalid syntax)
+  // First replace the full type with generic parameters
+  content = content.replace(/Apollo\.BaseMutationOptions<[^>]+>/g, 'any');
+  // Then replace any remaining instances without parameters
+  content = content.replace(/Apollo\.BaseMutationOptions/g, 'any');
+
+  // Replace Apollo.MutationFunction - this is complex, we'll use a helper type
+  content = content.replace(
+    /export type (\w+MutationFn) = Apollo\.MutationFunction<(\w+),\s*(\w+)>;/g,
+    (match, typeName, mutationType, variablesType) => {
+      // Extract base name: LoginMutationFn -> Login
+      const baseName = typeName.replace(/MutationFn$/, '');
+      const hookName = `use${baseName}Mutation`;
+      return `export type ${typeName} = ReturnType<typeof ${hookName}>[0];`;
+    }
   );
 
   // Replace Apollo.SkipToken -> typeof skipToken

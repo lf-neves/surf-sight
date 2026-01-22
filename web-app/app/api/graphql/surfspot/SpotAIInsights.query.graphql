@@ -1,0 +1,13 @@
+query SpotAIInsights($id: ID!) {
+  spot(id: $id) {
+    id
+    name
+    aiInsights {
+      conditions
+      skillLevel
+      recommendations
+      risks
+      rating
+    }
+  }
+}

@@ -9,13 +9,13 @@ generates:
       - 'typescript-resolvers'
     config:
       useIndexSignature: true
-      contextType: '../context#GraphQLContext'
+      contextType: '../../context#GraphQLContext'
       mappers:
-        User: '@prisma/client#User'
-        Spot: '@prisma/client#Spot'
-        Forecast: '@prisma/client#Forecast'
-        AISummary: '@prisma/client#AISummary'
-        FavoriteSpot: '@prisma/client#FavoriteSpot'
+        User: '@surf-sight/database#User'
+        Spot: '@surf-sight/database#Spot'
+        Forecast: '@surf-sight/database#Forecast'
+        AISummary: '@surf-sight/database#AISummary'
+        FavoriteSpot: '@surf-sight/database#FavoriteSpot'
       scalars:
         DateTime: string
         JSON: any

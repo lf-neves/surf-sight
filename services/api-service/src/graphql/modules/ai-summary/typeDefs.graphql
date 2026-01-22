@@ -27,6 +27,7 @@ extend type Query {
 extend type Mutation {
   createAISummary(input: CreateAISummaryInput!): AISummary!
   deleteAISummary(id: ID!): Boolean!
+  generateAIInsights(spotId: ID!): AISummary!
 }
 
 input CreateAISummaryInput {

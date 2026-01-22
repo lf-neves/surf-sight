@@ -1,4 +1,5 @@
-import { prismaClient, Spot } from '@surf-sight/database';
+import { drizzleDb, Spot, forecastServiceEvents, spots } from '@surf-sight/database';
+import { asc } from 'drizzle-orm';
 import {
   logger,
   pMap,
@@ -9,25 +10,24 @@ import { StormglassForecastProvider } from '../providers/StormglassForecastProvi
 
 export const handleEnqueueRetrievedForecastsToProcess = async () => {
   try {
-    const spots = await prismaClient.spot.findMany({
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
+    const allSpots = await drizzleDb
+      .select()
+      .from(spots)
+      .orderBy(asc(spots.createdAt));
 
-    if (!spots.length) {
+    if (!allSpots.length) {
       logger.info('Could not find any spots. Will skip processing forecasts.');
 
       return;
     }
 
-    logger.info('Found %d spots. Will look for new forecasts.', spots.length);
+    logger.info('Found %d spots. Will look for new forecasts.', allSpots.length);
 
     const forecastProvider = new StormglassForecastProvider();
     const awsRequestContext = getGlobalAwsRequestContext();
 
     // Retrieve forecasts for each spot and create individual events
-    await pMap(spots, async (spot: Spot) => {
+    await pMap(allSpots, async (spot: Spot) => {
       try {
         const forecastResponse = await forecastProvider.fetchForecast({
           lat: spot.lat,
@@ -36,17 +36,21 @@ export const handleEnqueueRetrievedForecastsToProcess = async () => {
           end: new Date(),
         });
 
-        const forecastServiceEvent =
-          await prismaClient.forecastServiceEvent.create({
-            data: {
-              eventType: 'FORECASTS_UPDATE_ENQUEUED',
-              payload: JSON.stringify({
-                forecast: forecastResponse,
-                spotId: spot.spotId,
-              }),
-              enqueuerAwsRequestId: awsRequestContext?.awsRequestId ?? null,
+        const [forecastServiceEvent] = await drizzleDb
+          .insert(forecastServiceEvents)
+          .values({
+            eventType: 'FORECASTS_UPDATE_ENQUEUED',
+            payload: {
+              forecast: forecastResponse,
+              spotId: spot.spotId,
             },
-          });
+            enqueuerAwsRequestId: awsRequestContext?.awsRequestId ?? null,
+          })
+          .returning();
+
+        if (!forecastServiceEvent) {
+          throw new Error('Failed to create forecast service event');
+        }
 
         // Enqueue the event to SQS
         const queueUrl = process.env.SQS_QUEUE_URL;

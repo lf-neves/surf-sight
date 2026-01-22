@@ -19,27 +19,14 @@ export const forecastResolvers: GraphqlForecastResolvers = {
   },
 
   summaries: async (parent, _args, context) => {
-    return context.prisma.aISummary.findMany({
-      where: {
-        forecastId: parent.forecastId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    // Use the service to find summaries for this forecast
+    return context.services.aiSummaryService.findByForecastId(parent.forecastId);
   },
 };
 
 export const forecastQueryResolvers: GraphqlQueryResolvers = {
   forecast: async (_parent, args, context) => {
     return context.services.forecastService.findById(args.id);
-  },
-
-  forecastsForSpot: async (_parent, args, context) => {
-    return context.services.forecastService.findForSpot(
-      args.spotId,
-      args.nextHours || undefined
-    );
   },
 
   latestForecastForSpot: async (_parent, args, context) => {
@@ -65,15 +52,12 @@ export const forecastMutationResolvers: GraphqlMutationResolvers = {
   },
 
   updateForecast: async (_parent, args, context) => {
-    const forecast = await context.prisma.forecast.update({
-      where: { forecastId: args.id },
-      data: {
-        ...(args.input.timestamp && {
-          timestamp: new Date(args.input.timestamp),
-        }),
-        ...(args.input.raw && { raw: args.input.raw }),
-        ...(args.input.source && { source: args.input.source }),
-      },
+    const forecast = await context.services.forecastService.update(args.id, {
+      ...(args.input.timestamp && {
+        timestamp: new Date(args.input.timestamp),
+      }),
+      ...(args.input.raw && { raw: args.input.raw }),
+      ...(args.input.source && { source: args.input.source }),
     });
 
     await context.pubsub.publish(FORECAST_UPDATED, {
@@ -91,9 +75,8 @@ export const forecastMutationResolvers: GraphqlMutationResolvers = {
 
 export const forecastSubscriptionResolvers: GraphqlSubscriptionResolvers = {
   forecastUpdated: {
-    // @ts-expect-error this is a workaround to avoid type errors
     subscribe: async (_parent, _args, context) => {
-      return context.pubsub.asyncIterator([FORECAST_UPDATED]);
+      return context.pubsub.asyncIterator([FORECAST_UPDATED]) as any;
     },
     resolve: (payload: any) => {
       // Filter by spotId if provided

@@ -12,7 +12,6 @@ type Forecast {
 
 extend type Query {
   forecast(id: ID!): Forecast
-  forecastsForSpot(spotId: ID!, nextHours: Int): [Forecast!]!
   latestForecastForSpot(spotId: ID!): Forecast
 }
 

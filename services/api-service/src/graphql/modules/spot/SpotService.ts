@@ -1,34 +1,42 @@
-import { PrismaClient, Spot, SpotType } from "@prisma/client";
-import { TypesenseService } from "../../../services/TypesenseService";
+import { drizzleDb, spots, Spot, SpotType } from '@surf-sight/database';
+import { eq, asc, like, or } from 'drizzle-orm';
+import { logger } from '@surf-sight/core';
 
 export class SpotService {
-  constructor(
-    private prisma: PrismaClient,
-    private typesense?: TypesenseService
-  ) {}
+  constructor(private db: typeof drizzleDb) {}
 
   async findAll(): Promise<Spot[]> {
-    return this.prisma.spot.findMany({
-      orderBy: {
-        name: "asc",
-      },
-    });
+    try {
+      const result = await this.db.select().from(spots).orderBy(asc(spots.name));
+      return result;
+    } catch (error: any) {
+      logger.error('SpotService.findAll error:', {
+        error: error?.message,
+        stack: error?.stack,
+        cause: error?.cause,
+        code: error?.code,
+        detail: error?.detail,
+      });
+      throw error;
+    }
   }
 
   async findById(id: string): Promise<Spot | null> {
-    return this.prisma.spot.findUnique({
-      where: {
-        spotId: id,
-      },
-    });
+    const result = await this.db
+      .select()
+      .from(spots)
+      .where(eq(spots.spotId, id))
+      .limit(1);
+    return result[0] || null;
   }
 
   async findBySlug(slug: string): Promise<Spot | null> {
-    return this.prisma.spot.findUnique({
-      where: {
-        slug,
-      },
-    });
+    const result = await this.db
+      .select()
+      .from(spots)
+      .where(eq(spots.slug, slug))
+      .limit(1);
+    return result[0] || null;
   }
 
   async create(data: {
@@ -39,17 +47,18 @@ export class SpotService {
     type: SpotType;
     meta?: any;
   }): Promise<Spot> {
-    const spot = await this.prisma.spot.create({
-      data: {
-        ...data,
+    const result = await this.db
+      .insert(spots)
+      .values({
+        name: data.name,
+        slug: data.slug,
+        lat: data.lat,
+        lon: data.lon,
+        type: data.type,
         meta: data.meta || {},
-      },
-    });
-    
-    // Index in Typesense
-    await this.indexSpotInTypesense(spot);
-    
-    return spot;
+      })
+      .returning();
+    return result[0];
   }
 
   async update(
@@ -63,112 +72,34 @@ export class SpotService {
       meta: any;
     }>
   ): Promise<Spot> {
-    const spot = await this.prisma.spot.update({
-      where: {
-        spotId: id,
-      },
-      data,
-    });
-    
-    // Update in Typesense
-    await this.indexSpotInTypesense(spot);
-    
-    return spot;
+    const result = await this.db
+      .update(spots)
+      .set(data)
+      .where(eq(spots.spotId, id))
+      .returning();
+    return result[0];
   }
 
   async delete(id: string): Promise<Spot> {
-    const spot = await this.prisma.spot.delete({
-      where: {
-        spotId: id,
-      },
-    });
-    
-    // Remove from Typesense
-    await this.removeSpotFromTypesense(id);
-    
-    return spot;
+    const result = await this.db
+      .delete(spots)
+      .where(eq(spots.spotId, id))
+      .returning();
+    return result[0];
   }
 
   async search(query: string): Promise<Spot[]> {
-    // Try Typesense first if available
-    if (this.typesense && query.trim()) {
-      try {
-        const typesenseResults = await this.typesense.searchSpots(query, 20);
-        
-        if (typesenseResults.length > 0) {
-          // Fetch full spot records from Prisma using the IDs from Typesense
-          const spotIds = typesenseResults.map((doc) => doc.id);
-          const spots = await this.prisma.spot.findMany({
-            where: {
-              spotId: {
-                in: spotIds,
-              },
-            },
-          });
-          
-          // Return spots in the same order as Typesense results
-          const spotMap = new Map(spots.map((spot) => [spot.spotId, spot]));
-          return typesenseResults
-            .map((doc) => spotMap.get(doc.id))
-            .filter((spot): spot is Spot => spot !== undefined);
-        }
-      } catch (error) {
-        // Fall through to Prisma search if Typesense fails
-        console.warn('Typesense search failed, falling back to Prisma:', error);
-      }
-    }
-
-    // Fallback to Prisma search
-    return this.prisma.spot.findMany({
-      where: {
-        OR: [
-          {
-            name: {
-              contains: query,
-              mode: "insensitive",
-            },
-          },
-          {
-            slug: {
-              contains: query,
-              mode: "insensitive",
-            },
-          },
-        ],
-      },
-      orderBy: {
-        name: "asc",
-      },
-      take: 20,
-    });
-  }
-
-  /**
-   * Index a spot in Typesense (call after create/update)
-   */
-  async indexSpotInTypesense(spot: Spot): Promise<void> {
-    if (this.typesense) {
-      try {
-        await this.typesense.indexSpot(spot);
-      } catch (error) {
-        console.warn('Failed to index spot in Typesense:', error);
-        // Don't throw - indexing failure shouldn't break the main operation
-      }
-    }
-  }
-
-  /**
-   * Remove a spot from Typesense (call after delete)
-   */
-  async removeSpotFromTypesense(spotId: string): Promise<void> {
-    if (this.typesense) {
-      try {
-        await this.typesense.deleteSpot(spotId);
-      } catch (error) {
-        console.warn('Failed to remove spot from Typesense:', error);
-        // Don't throw - deletion failure shouldn't break the main operation
-      }
-    }
+    const searchPattern = `%${query}%`;
+    const result = await this.db
+      .select()
+      .from(spots)
+      .where(
+        or(
+          like(spots.name, searchPattern),
+          like(spots.slug, searchPattern)
+        )
+      )
+      .orderBy(asc(spots.name));
+    return result;
   }
 }
-
