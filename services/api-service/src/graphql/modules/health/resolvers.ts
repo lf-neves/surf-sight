@@ -1,5 +1,6 @@
 import { GraphqlQueryResolvers } from '../../generated/types';
-import { prismaClient } from '@surf-sight/database';
+import { drizzleDb } from '@surf-sight/database';
+import { sql } from 'drizzle-orm';
 
 export const healthQueryResolvers: Partial<GraphqlQueryResolvers> = {
   dbStatus: async () => {
@@ -7,7 +8,7 @@ export const healthQueryResolvers: Partial<GraphqlQueryResolvers> = {
 
     try {
       // Execute a simple query to check database connectivity
-      await prismaClient.$queryRaw`SELECT 1`;
+      await drizzleDb.execute(sql`SELECT 1`);
 
       const responseTime = Date.now() - startTime;
 

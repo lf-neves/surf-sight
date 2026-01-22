@@ -5,33 +5,30 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:migrate:rollback": "prisma migrate reset --force",
-    "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:push": "drizzle-kit push",
+    "db:migrate": "drizzle-kit migrate",
+    "db:generate": "drizzle-kit generate",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "echo 'Seed script needs to be migrated to Drizzle'",
     "db:seed:spots": "tsx src/seeders/spots.seeder.ts",
-    "db:generate": "prisma generate",
-    "db:format": "prisma format",
     "lint": "eslint .",
     "type-check": "tsc --noEmit"
   },
-  "prisma": {
-    "schema": "./prisma/schema"
-  },
   "dependencies": {
-    "@prisma/client": "^6.7.0",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "drizzle-kit": "^0.31.8",
+    "drizzle-orm": "^0.45.1",
+    "pg": "^8.17.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
     "@types/node": "^22.10.2",
+    "@types/pg": "^8.15.6",
     "eslint": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
     "prettier": "^3.0.0",
-    "prisma": "^6.7.0",
-    "typescript-eslint": "^8.0.0",
     "tsx": "^4.7.0",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.0.0"
   }
 }

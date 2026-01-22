@@ -1,5 +1,6 @@
 import { faker, setupTestData, TestData } from '@surf-sight/test-setup';
-import { ForecastServiceEvent, prismaClient } from '@surf-sight/database';
+import { ForecastServiceEvent, drizzleDb, forecastServiceEvents, forecasts, spots } from '@surf-sight/database';
+import { eq } from 'drizzle-orm';
 import { processForecastServiceEvent } from '..';
 import * as validateModule from '../validateForecastProviderResponseData';
 import { ProviderResponse } from '../../../providers/types';
@@ -14,14 +15,14 @@ describe('processForecastServiceEvent', () => {
 
     mockForecast = {
       provider: 'stormglass',
-      fetchedAt: new Date().toISOString(),
+      fetchedAt: new Date(),
       location: {
         lat: testData.spot.lat,
         lng: testData.spot.lon,
       },
       points: [
         {
-          time: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
+          time: new Date(Date.now() + 3600000), // 1 hour from now
           waveHeight: 1.5,
           wavePeriod: 8,
           waveDirection: 180,
@@ -31,45 +32,49 @@ describe('processForecastServiceEvent', () => {
       ],
     };
 
-    forecastServiceEvent = await prismaClient.forecastServiceEvent.create({
-      data: {
+    const [created] = await drizzleDb
+      .insert(forecastServiceEvents)
+      .values({
         payload: {
           spotId: testData.spot.spotId,
           forecast: mockForecast,
         },
         eventType: 'create_new_forecasts',
-      },
-    });
+      })
+      .returning();
+
+    if (!created) {
+      throw new Error('Failed to create forecast service event');
+    }
+
+    forecastServiceEvent = created;
   });
 
   test('should process forecast service event', async () => {
-    let allForecasts = await prismaClient.forecast.findMany({
-      where: {
-        spotId: testData.spot.spotId,
-      },
-    });
+    let allForecasts = await drizzleDb
+      .select()
+      .from(forecasts)
+      .where(eq(forecasts.spotId, testData.spot.spotId));
 
     expect(allForecasts).toHaveLength(1);
 
     // act
     await processForecastServiceEvent({ forecastServiceEvent });
 
-    allForecasts = await prismaClient.forecast.findMany({
-      where: {
-        spotId: testData.spot.spotId,
-      },
-    });
+    allForecasts = await drizzleDb
+      .select()
+      .from(forecasts)
+      .where(eq(forecasts.spotId, testData.spot.spotId));
 
     // assert
     expect(allForecasts).toHaveLength(2);
   });
 
   test('should not process ForecastServiceEvent if forecast is not valid', async () => {
-    const initialForecasts = await prismaClient.forecast.findMany({
-      where: {
-        spotId: testData.spot.spotId,
-      },
-    });
+    const initialForecasts = await drizzleDb
+      .select()
+      .from(forecasts)
+      .where(eq(forecasts.spotId, testData.spot.spotId));
 
     const initialCount = initialForecasts.length;
 
@@ -85,11 +90,10 @@ describe('processForecastServiceEvent', () => {
     ).rejects.toThrow('Invalid forecast data');
 
     // Verify no new forecasts were created
-    const finalForecasts = await prismaClient.forecast.findMany({
-      where: {
-        spotId: testData.spot.spotId,
-      },
-    });
+    const finalForecasts = await drizzleDb
+      .select()
+      .from(forecasts)
+      .where(eq(forecasts.spotId, testData.spot.spotId));
 
     // assert
     expect(finalForecasts).toHaveLength(initialCount);
@@ -97,16 +101,20 @@ describe('processForecastServiceEvent', () => {
 
   test('should not process ForecastServiceEvent if Spot is not found', async () => {
     const invalidSpotId = faker.string.uuid();
-    const invalidForecastServiceEvent =
-      await prismaClient.forecastServiceEvent.create({
-        data: {
-          payload: {
-            spotId: invalidSpotId,
-            forecast: mockForecast,
-          },
-          eventType: 'create_new_forecasts',
+    const [invalidForecastServiceEvent] = await drizzleDb
+      .insert(forecastServiceEvents)
+      .values({
+        payload: {
+          spotId: invalidSpotId,
+          forecast: mockForecast,
         },
-      });
+        eventType: 'create_new_forecasts',
+      })
+      .returning();
+
+    if (!invalidForecastServiceEvent) {
+      throw new Error('Failed to create invalid forecast service event');
+    }
 
     await expect(
       processForecastServiceEvent({

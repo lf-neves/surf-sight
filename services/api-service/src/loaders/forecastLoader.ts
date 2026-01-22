@@ -1,12 +1,13 @@
 import DataLoader from 'dataloader';
-import { Forecast, PrismaClient } from '@prisma/client';
+import { drizzleDb, forecasts, Forecast } from '@surf-sight/database';
+import { inArray, asc } from 'drizzle-orm';
 
 type ForecastKey = {
   spotId: string;
   hours?: number;
 };
 
-export function createForecastLoader(prisma: PrismaClient) {
+export function createForecastLoader(db: typeof drizzleDb) {
   return new DataLoader<ForecastKey, Forecast[]>(
     async (keys) => {
       // Group keys by spotId
@@ -20,18 +21,15 @@ export function createForecastLoader(prisma: PrismaClient) {
       });
 
       // Fetch all forecasts for these spots
-      const forecasts = await prisma.forecast.findMany({
-        where: {
-          spotId: { in: spotIds },
-        },
-        orderBy: {
-          timestamp: 'asc',
-        },
-      });
+      const result = await db
+        .select()
+        .from(forecasts)
+        .where(inArray(forecasts.spotId, spotIds))
+        .orderBy(asc(forecasts.timestamp));
 
       // Group by spotId
       const forecastsBySpot = new Map<string, Forecast[]>();
-      forecasts.forEach((forecast) => {
+      result.forEach((forecast) => {
         const existing = forecastsBySpot.get(forecast.spotId) || [];
         existing.push(forecast);
         forecastsBySpot.set(forecast.spotId, existing);

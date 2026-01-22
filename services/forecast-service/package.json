@@ -9,16 +9,17 @@
     "test:coverage": "jest --coverage",
     "build": "rm -rf dist && tsc",
     "type-check": "tsc --noEmit",
-    "create-test-event": "pnpm --filter @surf-sight/database db:generate && tsx scripts/create-test-event.ts",
-    "invoke:enqueue": "pnpm --filter @surf-sight/database db:generate && serverless invoke local -f enqueueForecasts",
-    "invoke:process": "pnpm --filter @surf-sight/database db:generate && serverless invoke local -f processSqsMessage --path events/sqs-event.json",
-    "package": "pnpm --filter @surf-sight/database db:generate && serverless package",
-    "deploy": "pnpm --filter @surf-sight/database db:generate && serverless deploy"
+    "create-test-event": "tsx scripts/create-test-event.ts",
+    "invoke:enqueue": "serverless invoke local -f enqueueForecasts",
+    "invoke:process": "serverless invoke local -f processSqsMessage --path events/sqs-event.json",
+    "package": "serverless package",
+    "deploy": "serverless deploy"
   },
   "dependencies": {
     "@surf-sight/core": "workspace:*",
     "@surf-sight/database": "workspace:*",
-    "@surf-sight/test-setup": "workspace:*"
+    "@surf-sight/test-setup": "workspace:*",
+    "drizzle-orm": "^0.45.1"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.145",

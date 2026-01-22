@@ -2,21 +2,35 @@ service: api-service
 
 plugins:
   - serverless-offline
+  # Prisma plugin removed - Drizzle doesn't need code generation or special packaging
 
 provider:
   name: aws
   runtime: nodejs22.x
   region: us-east-2
   profile: surf-sight
+  deploymentBucket:
+    name: ${ssm:/serverless-framework/deployment/s3-bucket}
+  iam:
+    role:
+      statements:
+        # Allow Lambda to read from Parameter Store (for runtime access if needed)
+        - Effect: Allow
+          Action:
+            - ssm:GetParameter
+            - ssm:GetParameters
+            - ssm:GetParametersByPath
+          Resource:
+            - arn:aws:ssm:us-east-2:*:parameter/surf-sight/*
   environment:
     NODE_ENV: production
-    DATABASE_URL: ${env:DATABASE_URL, ''}
-    JWT_SECRET: ${env:JWT_SECRET, ''}
-    OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
-    TYPESENSE_HOST: ${env:TYPESENSE_HOST, 'localhost'}
-    TYPESENSE_PORT: ${env:TYPESENSE_PORT, '8108'}
-    TYPESENSE_PROTOCOL: ${env:TYPESENSE_PROTOCOL, 'http'}
-    TYPESENSE_API_KEY: ${env:TYPESENSE_API_KEY, 'xyz'}
+    DATABASE_URL: ${ssm:/surf-sight/db/url}
+    JWT_SECRET: ${ssm:/surf-sight/api/jwt-secret}
+    OPENAI_API_KEY: ${ssm:/surf-sight/api/openai-api-key}
+    TYPESENSE_HOST: ${ssm:/surf-sight/api/typesense-host, 'localhost'}
+    TYPESENSE_PORT: ${ssm:/surf-sight/api/typesense-port, '8108'}
+    TYPESENSE_PROTOCOL: ${ssm:/surf-sight/api/typesense-protocol, 'http'}
+    TYPESENSE_API_KEY: ${ssm:/surf-sight/api/typesense-api-key, 'xyz'}
   vpc:
     securityGroupIds:
       - sg-0c60124c86ca3bc22
@@ -39,6 +53,9 @@ build:
       - '@apollo/server'
       - '@as-integrations/aws-lambda'
       - 'graphql'
+      - 'drizzle-orm'
+      - 'pg'
+      - 'pg-native'
     loader:
       '.graphql': 'text'
 
@@ -46,15 +63,10 @@ package:
   individually: true
   excludeDevDependencies: true
   patterns:
-    - 'node_modules/.pnpm/**/@prisma+client@*/**'
-    - '!node_modules/.pnpm/**/@prisma+client@*/**/libquery_engine-*'
-    - 'node_modules/.pnpm/**/@prisma+client@*/**/libquery_engine-rhel-openssl-3.0.x.so.node'
-    - '!node_modules/.prisma/client/libquery_engine-*'
-    - 'node_modules/.prisma/client/libquery_engine-rhel-openssl-3.0.x.so.node'
-    - '!node_modules/prisma/libquery_engine-*'
-    - '!node_modules/@prisma/engines/**'
-    - '!node_modules/.cache/prisma/**'
+    # Drizzle ORM - no special packaging needed, just include node_modules
+    # Include GraphQL files
     - 'src/graphql/modules/**/*.graphql'
+    # Exclude test files and unnecessary files
     - '!node_modules/**/*.test.*'
     - '!node_modules/**/*.spec.*'
     - '!node_modules/**/test/**'
@@ -63,7 +75,6 @@ package:
     - '!node_modules/**/docs/**'
     - '!node_modules/**/examples/**'
     - '!node_modules/**/.git/**'
-    - '!node_modules/**/.cache/**'
     - '!node_modules/**/.bin/**'
     - '!node_modules/**/*.md'
 

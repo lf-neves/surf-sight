@@ -1,6 +1,6 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import { User, Spot, Forecast, AISummary, FavoriteSpot } from '@prisma/client';
-import { GraphQLContext } from '../context';
+import { User, Spot, Forecast, AISummary, FavoriteSpot } from '@surf-sight/database';
+import { GraphQLContext } from '../../context';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };

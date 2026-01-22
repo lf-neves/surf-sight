@@ -1,6 +1,7 @@
-import { PrismaClient, AISummary, Forecast, Spot } from '@prisma/client';
+import { drizzleDb, aiSummaries, AISummary, Forecast, Spot } from '@surf-sight/database';
 import { OpenAIService } from '../../../services/OpenAIService';
 import { logger } from '@surf-sight/core';
+import { eq, desc, lte, and } from 'drizzle-orm';
 
 export interface AIInsights {
   conditions: string;
@@ -12,7 +13,7 @@ export interface AIInsights {
 
 export class AISummaryService {
   constructor(
-    private prisma: PrismaClient,
+    private db: typeof drizzleDb,
     private openAIService?: OpenAIService
   ) {}
 
@@ -20,20 +21,20 @@ export class AISummaryService {
     spotId: string,
     timestamp?: Date
   ): Promise<AISummary | null> {
-    const where: any = { spotId };
+    const conditions: any[] = [eq(aiSummaries.spotId, spotId)];
 
     if (timestamp) {
-      where.createdAt = {
-        lte: timestamp,
-      };
+      conditions.push(lte(aiSummaries.createdAt, timestamp));
     }
 
-    return this.prisma.aISummary.findFirst({
-      where,
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    const result = await this.db
+      .select()
+      .from(aiSummaries)
+      .where(and(...conditions))
+      .orderBy(desc(aiSummaries.createdAt))
+      .limit(1);
+    
+    return result[0] || null;
   }
 
   async getLatestInsights(
@@ -86,29 +87,43 @@ export class AISummaryService {
     structured?: any;
     modelInfo?: any;
   }): Promise<AISummary> {
-    return this.prisma.aISummary.create({
-      data: {
-        ...data,
+    const result = await this.db
+      .insert(aiSummaries)
+      .values({
+        forecastId: data.forecastId,
+        spotId: data.spotId,
+        summary: data.summary,
         structured: data.structured || {},
         modelInfo: data.modelInfo || {},
-      },
-    });
+      })
+      .returning();
+    return result[0];
   }
 
   async findById(id: string): Promise<AISummary | null> {
-    return this.prisma.aISummary.findUnique({
-      where: {
-        aiSummaryId: id,
-      },
-    });
+    const result = await this.db
+      .select()
+      .from(aiSummaries)
+      .where(eq(aiSummaries.aiSummaryId, id))
+      .limit(1);
+    return result[0] || null;
+  }
+
+  async findByForecastId(forecastId: string): Promise<AISummary[]> {
+    const result = await this.db
+      .select()
+      .from(aiSummaries)
+      .where(eq(aiSummaries.forecastId, forecastId))
+      .orderBy(desc(aiSummaries.createdAt));
+    return result;
   }
 
   async delete(id: string): Promise<AISummary> {
-    return this.prisma.aISummary.delete({
-      where: {
-        aiSummaryId: id,
-      },
-    });
+    const result = await this.db
+      .delete(aiSummaries)
+      .where(eq(aiSummaries.aiSummaryId, id))
+      .returning();
+    return result[0];
   }
 
   /**
@@ -138,12 +153,16 @@ export class AISummaryService {
       );
 
       // Check if summary already exists for this forecast
-      const existing = await this.prisma.aISummary.findFirst({
-        where: {
-          forecastId: forecast.forecastId,
-          spotId: spot.spotId,
-        },
-      });
+      const existing = await this.db
+        .select()
+        .from(aiSummaries)
+        .where(
+          and(
+            eq(aiSummaries.forecastId, forecast.forecastId),
+            eq(aiSummaries.spotId, spot.spotId)
+          )
+        )
+        .limit(1);
 
       const structured = {
         skillLevel: insights.skillLevel,
@@ -157,29 +176,31 @@ export class AISummaryService {
         timestamp: new Date().toISOString(),
       };
 
-      if (existing) {
+      if (existing[0]) {
         // Update existing summary
-        return this.prisma.aISummary.update({
-          where: {
-            aiSummaryId: existing.aiSummaryId,
-          },
-          data: {
+        const result = await this.db
+          .update(aiSummaries)
+          .set({
             summary,
             structured,
             modelInfo,
-          },
-        });
+          })
+          .where(eq(aiSummaries.aiSummaryId, existing[0].aiSummaryId))
+          .returning();
+        return result[0];
       } else {
         // Create new summary
-        return this.prisma.aISummary.create({
-          data: {
+        const result = await this.db
+          .insert(aiSummaries)
+          .values({
             forecastId: forecast.forecastId,
             spotId: spot.spotId,
             summary,
             structured,
             modelInfo,
-          },
-        });
+          })
+          .returning();
+        return result[0];
       }
     } catch (error) {
       logger.error('Error generating and saving AI insights:', error);

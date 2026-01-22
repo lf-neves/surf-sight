@@ -1,8 +1,10 @@
 import {
   ForecastServiceEvent,
-  prismaClient,
-  PrismaClient,
+  drizzleDb,
+  spots,
+  forecasts,
 } from '@surf-sight/database';
+import { eq } from 'drizzle-orm';
 import { ProviderResponse } from '../../providers/types';
 import { logger } from '@surf-sight/core';
 import { validateForecastProviderResponseData } from './validateForecastProviderResponseData';
@@ -31,10 +33,8 @@ function parseProviderResponseDates(rawForecast: any): ProviderResponse {
 
 export async function processForecastServiceEvent({
   forecastServiceEvent,
-  client = prismaClient,
 }: {
   forecastServiceEvent: ForecastServiceEvent;
-  client?: PrismaClient;
 }) {
   const { payload } = forecastServiceEvent;
   // Handle both string (from SQS) and object (from Prisma) payloads
@@ -49,11 +49,13 @@ export async function processForecastServiceEvent({
 
   const { spotId } = eventPayload;
 
-  const spot = await client.spot.findUnique({
-    where: {
-      spotId,
-    },
-  });
+  const spotResults = await drizzleDb
+    .select()
+    .from(spots)
+    .where(eq(spots.spotId, spotId))
+    .limit(1);
+
+  const spot = spotResults[0] || null;
 
   if (!spot) {
     throw new Error(
@@ -74,13 +76,12 @@ export async function processForecastServiceEvent({
     spotId
   );
 
-  await client.forecast.createMany({
-    data: forecast.points.map((point) => ({
+  await drizzleDb.insert(forecasts).values(
+    forecast.points.map((point) => ({
       spotId,
       timestamp: point.time,
-      raw: JSON.stringify(point),
+      raw: point,
       source: forecast.provider,
-    })),
-    skipDuplicates: true,
-  });
+    }))
+  );
 }

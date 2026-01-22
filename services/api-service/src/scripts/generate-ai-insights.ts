@@ -37,18 +37,28 @@ for (const envPath of envPaths) {
 }
 
 if (!envLoaded) {
-  console.warn('⚠ No .env file found. Make sure OPENAI_API_KEY is set in your environment.');
+  console.warn(
+    '⚠ No .env file found. Make sure OPENAI_API_KEY is set in your environment.'
+  );
 } else {
   // Verify OPENAI_API_KEY is loaded
-  if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.includes('placeholder')) {
-    console.warn('⚠ OPENAI_API_KEY not found in .env file or is a placeholder.');
-    console.log('Current value:', process.env.OPENAI_API_KEY ? 'Set (hidden)' : 'Not set');
+  if (
+    !process.env.OPENAI_API_KEY ||
+    process.env.OPENAI_API_KEY.includes('placeholder')
+  ) {
+    console.warn(
+      '⚠ OPENAI_API_KEY not found in .env file or is a placeholder.'
+    );
+    console.log(
+      'Current value:',
+      process.env.OPENAI_API_KEY ? 'Set (hidden)' : 'Not set'
+    );
   } else {
     console.log('✓ OPENAI_API_KEY is set');
   }
 }
 
-import { prismaClient } from '@surf-sight/database';
+import { drizzleDb } from '@surf-sight/database';
 import { logger } from '@surf-sight/core';
 import { SpotService } from '../graphql/modules/spot/SpotService';
 import { ForecastService } from '../graphql/modules/forecast/ForecastService';
@@ -60,8 +70,8 @@ async function generateAIInsights(spotId: string) {
     logger.info('Starting AI insights generation', { spotId });
 
     // Initialize services
-    const spotService = new SpotService(prismaClient);
-    const forecastService = new ForecastService(prismaClient);
+    const spotService = new SpotService(drizzleDb);
+    const forecastService = new ForecastService(drizzleDb);
 
     // Initialize OpenAI service
     const openAIService = new OpenAIService();
@@ -69,11 +79,14 @@ async function generateAIInsights(spotId: string) {
       logger.error(
         'OpenAI service is not available. Please configure OPENAI_API_KEY in your .env file.'
       );
-      logger.info('Current OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? 'Set (hidden)' : 'Not set');
+      logger.info(
+        'Current OPENAI_API_KEY:',
+        process.env.OPENAI_API_KEY ? 'Set (hidden)' : 'Not set'
+      );
       process.exit(1);
     }
 
-    const aiSummaryService = new AISummaryService(prismaClient, openAIService);
+    const aiSummaryService = new AISummaryService(drizzleDb, openAIService);
 
     // Verify spot exists
     const spot = await spotService.findById(spotId);
@@ -132,14 +145,11 @@ async function generateAIInsights(spotId: string) {
     console.log(`Risks: ${structured.risks?.length || 0} items`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-    // Close database connection
-    await prismaClient.$disconnect();
-
+    // Drizzle uses connection pooling, no need to disconnect
     logger.info('Script completed successfully');
     process.exit(0);
   } catch (error) {
     logger.error('Error generating AI insights:', error);
-    await prismaClient.$disconnect();
     process.exit(1);
   }
 }

@@ -1,4 +1,4 @@
-import { prismaClient } from '@surf-sight/database';
+import { drizzleDb, prismaClient } from '@surf-sight/database';
 import { PubSub } from 'graphql-subscriptions';
 import jwt from 'jsonwebtoken';
 import { logger } from '@surf-sight/core';
@@ -19,7 +19,8 @@ export interface User {
 }
 
 export interface GraphQLContext {
-  prisma: typeof prismaClient;
+  prisma: typeof drizzleDb; // Keep name for backward compatibility
+  db: typeof drizzleDb; // New name
   services: {
     spotService: SpotService;
     forecastService: ForecastService;
@@ -36,20 +37,21 @@ export interface GraphQLContext {
 }
 
 export function createContext(user: User | null = null): GraphQLContext {
-  // Initialize services
-  const spotService = new SpotService(prismaClient);
-  const forecastService = new ForecastService(prismaClient);
+  // Initialize services with Drizzle
+  const spotService = new SpotService(drizzleDb);
+  const forecastService = new ForecastService(drizzleDb);
   const openAIService = new OpenAIService();
-  const aiSummaryService = new AISummaryService(prismaClient, openAIService);
-  const userService = new UserService(prismaClient);
-  const favoriteSpotService = new FavoriteSpotService(prismaClient);
+  const aiSummaryService = new AISummaryService(drizzleDb, openAIService);
+  const userService = new UserService(drizzleDb);
+  const favoriteSpotService = new FavoriteSpotService(drizzleDb);
 
   // Initialize loaders
-  const forecastLoader = createForecastLoader(prismaClient);
-  const summaryLoader = createSummaryLoader(prismaClient);
+  const forecastLoader = createForecastLoader(drizzleDb);
+  const summaryLoader = createSummaryLoader(drizzleDb);
 
   return {
-    prisma: prismaClient,
+    prisma: drizzleDb, // Backward compatibility
+    db: drizzleDb, // New name
     services: {
       spotService,
       forecastService,

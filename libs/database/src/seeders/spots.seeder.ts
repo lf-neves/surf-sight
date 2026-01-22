@@ -1,5 +1,7 @@
-import { prismaClient } from '../client';
-import { SpotType } from '@prisma/client';
+import { drizzleDb } from '../drizzle/client';
+import { spots as spotsTable } from '../drizzle/schema';
+import type { SpotType } from '../drizzle/schema/enums';
+import { eq } from 'drizzle-orm';
 
 interface SpotData {
   name: string;
@@ -24,7 +26,7 @@ const spots: SpotData[] = [
     slug: 'pipeline-hawaii',
     lat: 21.6569,
     lon: -158.0506,
-    type: SpotType.reef,
+    type: 'reef' as SpotType,
     meta: {
       description: 'The most famous and dangerous wave in the world',
       country: 'United States',
@@ -40,7 +42,7 @@ const spots: SpotData[] = [
     slug: 'jeffreys-bay-south-africa',
     lat: -34.0503,
     lon: 24.9133,
-    type: SpotType.point,
+    type: 'point' as SpotType,
     meta: {
       description: 'World-class right-hand point break, home of the J-Bay Open',
       country: 'South Africa',
@@ -56,7 +58,7 @@ const spots: SpotData[] = [
     slug: 'teahupoo-tahiti',
     lat: -17.8444,
     lon: -149.2669,
-    type: SpotType.reef,
+    type: 'reef' as SpotType,
     meta: {
       description: 'Heavy, barreling reef break known for massive waves',
       country: 'French Polynesia',
@@ -72,7 +74,7 @@ const spots: SpotData[] = [
     slug: 'sunset-beach-hawaii',
     lat: 21.6667,
     lon: -158.05,
-    type: SpotType.beach,
+    type: 'beach' as SpotType,
     meta: {
       description: 'Iconic big wave beach break on the North Shore',
       country: 'United States',
@@ -88,7 +90,7 @@ const spots: SpotData[] = [
     slug: 'mavericks-california',
     lat: 37.4925,
     lon: -122.5014,
-    type: SpotType.reef,
+    type: 'reef' as SpotType,
     meta: {
       description: 'Big wave spot known for massive, powerful waves',
       country: 'United States',
@@ -104,7 +106,7 @@ const spots: SpotData[] = [
     slug: 'nazare-portugal',
     lat: 39.6011,
     lon: -9.0756,
-    type: SpotType.beach,
+    type: 'beach' as SpotType,
     meta: {
       description: 'Home to some of the largest waves ever surfed',
       country: 'Portugal',
@@ -120,7 +122,7 @@ const spots: SpotData[] = [
     slug: 'uluwatu-bali',
     lat: -8.8292,
     lon: 115.085,
-    type: SpotType.reef,
+    type: 'reef' as SpotType,
     meta: {
       description: 'World-famous left-hand reef break with multiple sections',
       country: 'Indonesia',
@@ -136,7 +138,7 @@ const spots: SpotData[] = [
     slug: 'cloudbreak-fiji',
     lat: -18.1667,
     lon: 177.2167,
-    type: SpotType.reef,
+    type: 'reef' as SpotType,
     meta: {
       description: "Iconic left-hand reef break, one of the world's best waves",
       country: 'Fiji',
@@ -152,7 +154,7 @@ const spots: SpotData[] = [
     slug: 'raglan-new-zealand',
     lat: -37.8,
     lon: 174.8667,
-    type: SpotType.point,
+    type: 'point' as SpotType,
     meta: {
       description: 'Long left-hand point break with multiple sections',
       country: 'New Zealand',
@@ -168,7 +170,7 @@ const spots: SpotData[] = [
     slug: 'hossegor-france',
     lat: 43.65,
     lon: -1.4,
-    type: SpotType.beach,
+    type: 'beach' as SpotType,
     meta: {
       description: 'Powerful beach breaks, home of the Quiksilver Pro',
       country: 'France',
@@ -184,7 +186,7 @@ const spots: SpotData[] = [
     slug: 'bells-beach-australia',
     lat: -38.3667,
     lon: 144.2833,
-    type: SpotType.reef,
+    type: 'reef' as SpotType,
     meta: {
       description: 'Iconic right-hand reef break, home of the Rip Curl Pro',
       country: 'Australia',
@@ -200,7 +202,7 @@ const spots: SpotData[] = [
     slug: 'supertubos-portugal',
     lat: 39.35,
     lon: -9.3333,
-    type: SpotType.beach,
+    type: 'beach' as SpotType,
     meta: {
       description: 'Barreling beach break, part of the WSL tour',
       country: 'Portugal',
@@ -216,7 +218,7 @@ const spots: SpotData[] = [
     slug: 'lower-trestles-california',
     lat: 33.3833,
     lon: -117.5833,
-    type: SpotType.reef,
+    type: 'reef' as SpotType,
     meta: {
       description: 'High-performance right-hand point break',
       country: 'United States',
@@ -232,7 +234,7 @@ const spots: SpotData[] = [
     slug: 'snapper-rocks-australia',
     lat: -28.1833,
     lon: 153.55,
-    type: SpotType.point,
+    type: 'point' as SpotType,
     meta: {
       description: 'Superbank, one of the longest waves in the world',
       country: 'Australia',
@@ -248,7 +250,7 @@ const spots: SpotData[] = [
     slug: 'ribeira-dilhas-portugal',
     lat: 39.0333,
     lon: -9.4167,
-    type: SpotType.reef,
+    type: 'reef' as SpotType,
     meta: {
       description:
         'Consistent right-hand reef break in the World Surfing Reserve',
@@ -265,7 +267,7 @@ const spots: SpotData[] = [
     slug: 'malibu-california',
     lat: 34.0333,
     lon: -118.6667,
-    type: SpotType.point,
+    type: 'point' as SpotType,
     meta: {
       description:
         'Iconic right-hand point break, birthplace of modern surfing',
@@ -282,7 +284,7 @@ const spots: SpotData[] = [
     slug: 'mundaka-spain',
     lat: 43.4,
     lon: -2.7,
-    type: SpotType.reef,
+    type: 'reef' as SpotType,
     meta: {
       description: 'World-class left-hand river mouth wave',
       country: 'Spain',
@@ -298,7 +300,7 @@ const spots: SpotData[] = [
     slug: 'punta-de-lobos-chile',
     lat: -34.3833,
     lon: -72.0167,
-    type: SpotType.point,
+    type: 'point' as SpotType,
     meta: {
       description: 'Powerful left-hand point break, big wave spot',
       country: 'Chile',
@@ -314,7 +316,7 @@ const spots: SpotData[] = [
     slug: 'anchor-point-morocco',
     lat: 30.5333,
     lon: -9.7,
-    type: SpotType.point,
+    type: 'point' as SpotType,
     meta: {
       description: 'Long right-hand point break in Morocco',
       country: 'Morocco',
@@ -330,7 +332,7 @@ const spots: SpotData[] = [
     slug: 'zicatela-mexico',
     lat: 15.85,
     lon: -97.0667,
-    type: SpotType.beach,
+    type: 'beach' as SpotType,
     meta: {
       description: 'Powerful beach break known as the Mexican Pipeline',
       country: 'Mexico',
@@ -351,34 +353,38 @@ export async function seedSpots() {
   for (const spotData of spots) {
     try {
       // Check if spot already exists
-      const existing = await prismaClient.spot.findUnique({
-        where: { slug: spotData.slug },
-      });
+      const existing = await drizzleDb
+        .select()
+        .from(spotsTable)
+        .where(eq(spotsTable.slug, spotData.slug))
+        .limit(1);
 
-      await prismaClient.spot.upsert({
-        where: { slug: spotData.slug },
-        update: {
-          name: spotData.name,
-          lat: spotData.lat,
-          lon: spotData.lon,
-          type: spotData.type,
-          meta: spotData.meta,
-        },
-        create: {
+      if (existing.length > 0) {
+        // Update existing spot
+        await drizzleDb
+          .update(spotsTable)
+          .set({
+            name: spotData.name,
+            lat: spotData.lat,
+            lon: spotData.lon,
+            type: spotData.type,
+            meta: spotData.meta,
+          })
+          .where(eq(spotsTable.slug, spotData.slug));
+        updated++;
+      } else {
+        // Create new spot
+        await drizzleDb.insert(spotsTable).values({
           name: spotData.name,
           slug: spotData.slug,
           lat: spotData.lat,
           lon: spotData.lon,
           type: spotData.type,
           meta: spotData.meta,
-        },
-      });
-
-      if (existing) {
-        updated++;
-      } else {
+        });
         created++;
       }
+
     } catch (error) {
       console.error(`❌ Failed to seed spot ${spotData.name}:`, error);
     }
@@ -398,6 +404,6 @@ if (require.main === module) {
       process.exit(1);
     })
     .finally(async () => {
-      await prismaClient.$disconnect();
+      // Drizzle uses connection pooling, no need to disconnect
     });
 }

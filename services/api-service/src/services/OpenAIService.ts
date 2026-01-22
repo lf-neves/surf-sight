@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { logger } from '@surf-sight/core';
-import { Spot, Forecast } from '@prisma/client';
+import { Spot, Forecast } from '@surf-sight/database';
 
 export interface AIInsights {
   skillLevel: string;
@@ -55,31 +55,31 @@ export class OpenAIService {
       const bestSeason = spotMeta?.bestSeason || 'all year';
       const location = `${spotMeta?.city || ''} ${spotMeta?.region || ''} ${spotMeta?.country || ''}`.trim();
 
-      const prompt = `You are an expert surf forecaster analyzing conditions for ${spot.name}${location ? ` in ${location}` : ''}.
+      const prompt = `Você é um especialista em previsão de surf analisando condições para ${spot.name}${location ? ` em ${location}` : ''}.
 
-Current Forecast Conditions:
-- Wave Height: ${waveHeight.toFixed(1)}m
-- Wave Period: ${wavePeriod.toFixed(1)}s
-- Wave Direction: ${waveDirection}°
-- Wind Speed: ${windSpeed.toFixed(1)} m/s
-- Wind Direction: ${windDirection}°
-${waterTemp ? `- Water Temperature: ${waterTemp.toFixed(1)}°C` : ''}
-- Spot Type: ${spot.type}
-- Difficulty Level: ${difficulty}
-- Best Season: ${bestSeason}
+Condições Atuais da Previsão:
+- Altura da Onda: ${waveHeight.toFixed(1)}m
+- Período da Onda: ${wavePeriod.toFixed(1)}s
+- Direção da Onda: ${waveDirection}°
+- Velocidade do Vento: ${windSpeed.toFixed(1)} m/s
+- Direção do Vento: ${windDirection}°
+${waterTemp ? `- Temperatura da Água: ${waterTemp.toFixed(1)}°C` : ''}
+- Tipo de Pico: ${spot.type}
+- Nível de Dificuldade: ${difficulty}
+- Melhor Estação: ${bestSeason}
 
-Analyze these conditions and provide:
-1. **Skill Level** (one word: "beginner", "intermediate", "advanced", or "expert")
-2. **Rating** (1-10 integer, where 10 is perfect conditions)
-3. **Recommendations** (3-5 actionable recommendations as an array of strings)
-4. **Risks** (2-4 potential risks or warnings as an array of strings)
+Analise essas condições e forneça:
+1. **Nível de Habilidade** (uma palavra: "iniciante", "intermediário", "avançado", ou "expert")
+2. **Avaliação** (número inteiro de 1-10, onde 10 são condições perfeitas)
+3. **Recomendações** (3-5 recomendações acionáveis como array de strings em português)
+4. **Riscos** (2-4 riscos potenciais ou avisos como array de strings em português)
 
-Respond ONLY with valid JSON in this exact format:
+Responda APENAS com JSON válido neste formato exato:
 {
-  "skillLevel": "intermediate",
+  "skillLevel": "intermediário",
   "rating": 7,
-  "recommendations": ["Recommendation 1", "Recommendation 2", "Recommendation 3"],
-  "risks": ["Risk 1", "Risk 2"]
+  "recommendations": ["Recomendação 1", "Recomendação 2", "Recomendação 3"],
+  "risks": ["Risco 1", "Risco 2"]
 }`;
 
       logger.info('[OpenAIService] Generating insights with OpenAI', {
@@ -94,7 +94,7 @@ Respond ONLY with valid JSON in this exact format:
           {
             role: 'system',
             content:
-              'You are an expert surf forecaster. Always respond with valid JSON only, no additional text.',
+              'Você é um especialista em previsão de surf. Sempre responda APENAS com JSON válido em português brasileiro, sem texto adicional. Todas as strings devem estar em português.',
           },
           {
             role: 'user',
@@ -113,8 +113,23 @@ Respond ONLY with valid JSON in this exact format:
       const insights = JSON.parse(content) as AIInsights;
 
       // Validate and normalize the response
+      // Map skill level to Portuguese if needed
+      const skillLevelMap: Record<string, string> = {
+        beginner: 'iniciante',
+        intermediate: 'intermediário',
+        advanced: 'avançado',
+        expert: 'expert',
+        iniciante: 'iniciante',
+        intermediário: 'intermediário',
+        avançado: 'avançado',
+      };
+
+      const skillLevel = insights.skillLevel 
+        ? skillLevelMap[insights.skillLevel.toLowerCase()] || insights.skillLevel
+        : 'intermediário';
+
       return {
-        skillLevel: insights.skillLevel || 'intermediate',
+        skillLevel,
         rating: Math.max(1, Math.min(10, Math.round(insights.rating || 5))),
         recommendations: Array.isArray(insights.recommendations)
           ? insights.recommendations
@@ -133,14 +148,14 @@ Respond ONLY with valid JSON in this exact format:
     }
 
     try {
-      const prompt = `Write a concise 2-3 sentence summary of surf conditions for ${spotName} based on these insights:
+      const prompt = `Escreva um resumo conciso de 2-3 frases sobre as condições de surf para ${spotName} baseado nestes insights:
 
-Skill Level: ${insights.skillLevel}
-Rating: ${insights.rating}/10
-Recommendations: ${insights.recommendations.join(', ')}
-Risks: ${insights.risks.join(', ')}
+Nível de Habilidade: ${insights.skillLevel}
+Avaliação: ${insights.rating}/10
+Recomendações: ${insights.recommendations.join(', ')}
+Riscos: ${insights.risks.join(', ')}
 
-Write a natural, engaging summary in Portuguese that surfers would find useful.`;
+Escreva um resumo natural e envolvente em português brasileiro que surfistas acharão útil.`;
 
       logger.info('[OpenAIService] Generating summary with OpenAI', {
         spotName,
@@ -153,7 +168,7 @@ Write a natural, engaging summary in Portuguese that surfers would find useful.`
           {
             role: 'system',
             content:
-              'You are a surf forecasting expert writing concise, engaging summaries in Portuguese for Brazilian surfers.',
+              'Você é um especialista em previsão de surf escrevendo resumos concisos e envolventes em português brasileiro para surfistas brasileiros.',
           },
           {
             role: 'user',

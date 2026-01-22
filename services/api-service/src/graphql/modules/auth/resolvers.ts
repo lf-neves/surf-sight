@@ -3,11 +3,11 @@ import {
   GraphqlAuthPayloadResolvers,
 } from '../../generated/types';
 import { AuthService } from '../../../auth/AuthService';
-import { prismaClient } from '@surf-sight/database';
+import { drizzleDb } from '@surf-sight/database';
 import { UserFacingError } from '../../../errors';
 import { HttpStatusCode } from '@surf-sight/core';
 
-const authService = new AuthService(prismaClient);
+const authService = new AuthService(drizzleDb);
 
 export const authPayloadResolvers: GraphqlAuthPayloadResolvers = {
   token: (parent) => parent.token,
