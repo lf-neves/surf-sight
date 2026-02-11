@@ -54,22 +54,12 @@ export function useForecastsForSpot({
   });
 
   const forecasts = useMemo<TransformedForecast[]>(() => {
-    if (!data?.forecast || skip || !spotId) {
+    const list = data?.forecastsForSpot;
+    if (!list || skip || !spotId) {
       return [];
     }
 
-    // Filter forecasts by nextHours if specified
-    let filteredForecasts = data.forecast;
-    if (nextHours) {
-      const now = new Date();
-      const cutoff = new Date(now.getTime() + nextHours * 60 * 60 * 1000);
-      filteredForecasts = spot.forecast.filter((f) => {
-        const timestamp = new Date(f.timestamp);
-        return timestamp <= cutoff;
-      });
-    }
-
-    return filteredForecasts.map((f) => {
+    return list.map((f) => {
       const timestamp = new Date(f.timestamp);
       const parsed = parseForecastRaw(f.raw);
 
@@ -101,10 +91,11 @@ export function useForecastsForSpot({
         updatedAt: new Date(f.updatedAt),
       };
     });
-  }, [data?.forecast, nextHours, skip, spotId]);
+  }, [data?.forecastsForSpot, skip, spotId]);
 
+  // API returns ascending by timestamp; latest is last
   const latestForecast = useMemo(() => {
-    return forecasts.length > 0 ? forecasts[0] : null;
+    return forecasts.length > 0 ? forecasts[forecasts.length - 1] : null;
   }, [forecasts]);
 
   return {

@@ -31,10 +31,11 @@ export function SwellCard() {
   const latestForecast = data?.spot?.latestForecastForSpot;
   const parsed = latestForecast ? parseForecastRaw(latestForecast.raw) : null;
 
+  const noForecast = !!(data?.spot && !latestForecast);
   if (!parsed || !latestForecast) {
     return (
       <Card>
-        <NoDataMessage message="Dados de swell não disponíveis" />
+        <NoDataMessage message="Dados de swell não disponíveis" noForecast={noForecast} />
       </Card>
     );
   }

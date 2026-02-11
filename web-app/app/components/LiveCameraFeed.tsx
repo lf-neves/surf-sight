@@ -3,16 +3,28 @@
 import { motion } from 'motion/react';
 import { Video, Maximize2, Radio, MapPin, Clock } from 'lucide-react';
 import { useState } from 'react';
+import { useAppSelector } from '@/lib/store/hooks';
 
 export function LiveCameraFeed() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedCamera, setSelectedCamera] = useState(0);
+  const selectedSpot = useAppSelector((state) => state.spot.selectedSpot);
 
   const cameras = [
-    { name: 'Câmera Principal', angle: 'Vista da Pedra', quality: 'HD' },
-    { name: 'Câmera Lateral', angle: 'Vista do Píer', quality: 'HD' },
-    { name: 'Câmera Aérea', angle: 'Vista Completa', quality: '4K' },
+    { name: 'Câmera Principal', angle: 'Vista geral', quality: 'HD' },
+    { name: 'Câmera Lateral', angle: 'Vista lateral', quality: 'HD' },
+    { name: 'Câmera Aérea', angle: 'Vista completa', quality: '4K' },
   ];
+
+  if (!selectedSpot) {
+    return (
+      <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
+        <Video className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+        <h2 className="text-gray-700 font-medium">Transmissão ao Vivo</h2>
+        <p className="text-sm text-gray-500 mt-1">Selecione um pico para ver câmeras (quando disponível).</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
@@ -37,14 +49,14 @@ export function LiveCameraFeed() {
               </div>
               <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
                 <MapPin className="w-3 h-3" />
-                Arpoador, Rio de Janeiro
+                {selectedSpot.name}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="text-sm text-gray-500 flex items-center gap-1">
               <Clock className="w-4 h-4" />
-              14:23
+              {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
             </div>
           </div>
         </div>

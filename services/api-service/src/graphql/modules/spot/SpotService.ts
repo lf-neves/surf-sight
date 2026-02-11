@@ -1,15 +1,29 @@
-import { drizzleDb, spots, Spot, SpotType } from '@surf-sight/database';
+import { drizzleDb, spots, Spot, SpotType, resetDatabasePool } from '@surf-sight/database';
 import { eq, asc, like, or } from 'drizzle-orm';
 import { logger } from '@surf-sight/core';
+
+function isConnectionError(error: any): boolean {
+  const msg = error?.message ?? '';
+  const causeMsg = error?.cause?.message ?? '';
+  return (
+    /connection timeout|Connection terminated|ECONNRESET|ECONNREFUSED/i.test(msg) ||
+    /connection timeout|Connection terminated|ECONNRESET|ECONNREFUSED/i.test(causeMsg)
+  );
+}
 
 export class SpotService {
   constructor(private db: typeof drizzleDb) {}
 
-  async findAll(): Promise<Spot[]> {
+  async findAll(isRetry = false): Promise<Spot[]> {
     try {
       const result = await this.db.select().from(spots).orderBy(asc(spots.name));
       return result;
     } catch (error: any) {
+      if (!isRetry && isConnectionError(error)) {
+        logger.warn('SpotService.findAll: connection error, resetting pool and retrying once');
+        await resetDatabasePool();
+        return this.findAll(true);
+      }
       logger.error('SpotService.findAll error:', {
         error: error?.message,
         stack: error?.stack,
@@ -21,13 +35,30 @@ export class SpotService {
     }
   }
 
-  async findById(id: string): Promise<Spot | null> {
-    const result = await this.db
-      .select()
-      .from(spots)
-      .where(eq(spots.spotId, id))
-      .limit(1);
-    return result[0] || null;
+  async findById(id: string, isRetry = false): Promise<Spot | null> {
+    try {
+      const result = await this.db
+        .select()
+        .from(spots)
+        .where(eq(spots.spotId, id))
+        .limit(1);
+      return result[0] || null;
+    } catch (error: any) {
+      if (!isRetry && isConnectionError(error)) {
+        logger.warn('SpotService.findById: connection error, resetting pool and retrying once');
+        await resetDatabasePool();
+        return this.findById(id, true);
+      }
+      logger.error('SpotService.findById error:', {
+        spotId: id,
+        message: error?.message,
+        stack: error?.stack,
+        cause: error?.cause,
+        code: error?.code,
+        detail: error?.detail,
+      });
+      throw error;
+    }
   }
 
   async findBySlug(slug: string): Promise<Spot | null> {

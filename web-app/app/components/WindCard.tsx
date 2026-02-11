@@ -35,7 +35,10 @@ export function WindCard() {
   if (!parsed || !latestForecast || parsed.windSpeed === undefined || parsed.windDirection === undefined) {
     return (
       <Card>
-        <NoDataMessage message="Dados de vento não disponíveis" />
+        <NoDataMessage
+          message="Dados de vento não disponíveis"
+          noForecast={!!(data?.spot && !latestForecast)}
+        />
       </Card>
     );
   }

@@ -1,8 +1,9 @@
 'use client';
 
 import { motion } from 'motion/react';
-import { MessageCircle, ThumbsUp, Clock, TrendingUp } from 'lucide-react';
+import { MessageCircle, ThumbsUp, Clock } from 'lucide-react';
 import { useState } from 'react';
+import { useAppSelector } from '@/lib/store/hooks';
 
 interface Comment {
   id: number;
@@ -15,45 +16,8 @@ interface Comment {
 }
 
 export function RealtimeComments() {
-  const [comments, setComments] = useState<Comment[]>([
-    {
-      id: 1,
-      user: 'Carlos Silva',
-      avatar: '🏄‍♂️',
-      time: 'há 5 min',
-      comment: 'Ondas excelentes! 1.5m com offshore perfeito. Crowd moderado.',
-      likes: 12,
-      condition: 'good'
-    },
-    {
-      id: 2,
-      user: 'Marina Costa',
-      avatar: '🏄‍♀️',
-      time: 'há 15 min',
-      comment: 'Acabei de sair da água. Sessão épica! Tubos na pedra do Arpoador 🔥',
-      likes: 24,
-      condition: 'good'
-    },
-    {
-      id: 3,
-      user: 'Pedro Santos',
-      avatar: '🤙',
-      time: 'há 30 min',
-      comment: 'Crowd pesado, mas vale a pena. Melhor período da manhã.',
-      likes: 8,
-      condition: 'okay'
-    },
-    {
-      id: 4,
-      user: 'Julia Almeida',
-      avatar: '🌊',
-      time: 'há 1h',
-      comment: 'Maré enchendo agora, ondas começando a melhorar. Vem!',
-      likes: 15,
-      condition: 'good'
-    }
-  ]);
-
+  const selectedSpot = useAppSelector((state) => state.spot.selectedSpot);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
 
   const handleLike = (id: number) => {
@@ -64,7 +28,7 @@ export function RealtimeComments() {
 
   const handlePostComment = () => {
     if (!newComment.trim()) return;
-    
+
     const comment: Comment = {
       id: Date.now(),
       user: 'Você',
@@ -72,12 +36,22 @@ export function RealtimeComments() {
       time: 'agora',
       comment: newComment,
       likes: 0,
-      condition: 'good'
+      condition: 'good',
     };
-    
+
     setComments([comment, ...comments]);
     setNewComment('');
   };
+
+  if (!selectedSpot) {
+    return (
+      <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
+        <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+        <h2 className="text-gray-700 font-medium">Comentários ao Vivo</h2>
+        <p className="text-sm text-gray-500 mt-1">Selecione um pico para ver e publicar comentários.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm">
@@ -91,7 +65,7 @@ export function RealtimeComments() {
             <p className="text-sm text-gray-500">
               <span className="inline-flex items-center gap-1">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                {comments.length} surfistas comentando
+                {comments.length} {comments.length === 1 ? 'comentário' : 'comentários'} • {selectedSpot.name}
               </span>
             </p>
           </div>
@@ -181,7 +155,6 @@ export function RealtimeComments() {
           whileHover={{ x: 2 }}
         >
           Ver todos os comentários
-          <TrendingUp className="w-4 h-4" />
         </motion.button>
       </div>
     </div>

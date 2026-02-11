@@ -3,12 +3,18 @@ import {
   GraphqlQueryResolvers,
   GraphqlMutationResolvers,
 } from '../../generated/types.js';
+import { logger } from '@surf-sight/core';
 
 export const spotResolvers: GraphqlSpotResolvers = {
   id: (parent) => parent.spotId,
 
   latestForecastForSpot: async (parent, _args, context) => {
-    return context.services.forecastService.findLatestForecastForSpot(parent.spotId);
+    const spotId = parent.spotId;
+    const forecast = await context.services.forecastService.findLatestForecastForSpot(spotId);
+    if (!forecast) {
+      logger.info('[Resolver] latestForecastForSpot', { spotId, found: false });
+    }
+    return forecast;
   },
 
   aiSummary: async (parent, args, context) => {
@@ -33,11 +39,15 @@ export const spotResolvers: GraphqlSpotResolvers = {
 
 export const spotQueryResolvers: Partial<GraphqlQueryResolvers> = {
   spots: async (_parent, _args, context) => {
-    return context.services.spotService.findAll();
+    const list = await context.services.spotService.findAll();
+    logger.info('[Resolver] spots', { count: list.length });
+    return list;
   },
 
   spot: async (_parent, args, context) => {
-    return context.services.spotService.findById(args.id);
+    const spot = await context.services.spotService.findById(args.id);
+    logger.info('[Resolver] spot(id)', { id: args.id, found: !!spot, name: spot?.name });
+    return spot;
   },
 
   spotBySlug: async (_parent, args, context) => {

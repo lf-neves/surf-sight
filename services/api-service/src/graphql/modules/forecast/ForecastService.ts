@@ -15,8 +15,8 @@ export class ForecastService {
     let whereConditions: any[] = [eq(forecasts.spotId, spotId)];
 
     if (nextHours) {
-      // Include forecasts from slightly in the past to future
-      const pastWindow = new Date(now.getTime() - 2 * 60 * 60 * 1000); // 2 hours ago
+      // Include forecasts from the past 24h so seeded/demo data and recent points show in charts
+      const pastWindow = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       const cutoff = new Date(now.getTime() + nextHours * 60 * 60 * 1000);
       whereConditions.push(
         gte(forecasts.timestamp, pastWindow),
@@ -32,8 +32,8 @@ export class ForecastService {
       );
     }
 
-    // Add a reasonable limit to prevent timeouts
-    const maxRecords = nextHours ? Math.min(nextHours + 2, 50) : 50;
+    // Cap to avoid timeouts; allow enough for 7-day charts (e.g. 3h steps ≈ 56 points)
+    const maxRecords = nextHours ? Math.min(nextHours + 2, 100) : 50;
 
     const startTime = Date.now();
     const result = await this.db

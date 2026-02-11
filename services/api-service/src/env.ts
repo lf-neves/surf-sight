@@ -3,6 +3,7 @@ let ssmCache: {
   databaseUrl?: string;
   jwtSecret?: string;
   openaiApiKey?: string;
+  stormglassApiKey?: string;
 } = {};
 
 // Fetch SSM parameter at runtime if not available in environment
@@ -53,6 +54,7 @@ async function getEnvAsync() {
   let databaseUrl = process.env.DATABASE_URL || '';
   let jwtSecret = process.env.JWT_SECRET || '';
   const openaiApiKey = process.env.OPENAI_API_KEY || '';
+  const stormglassApiKey = process.env.STORMGLASS_API_KEY || '';
   const nodeEnv = process.env.NODE_ENV || 'development';
 
   // If DATABASE_URL is empty or missing, try fetching from SSM at runtime
@@ -107,6 +109,7 @@ async function getEnvAsync() {
     port: parseInt(process.env.PORT || '4000', 10),
     nodeEnv,
     openaiApiKey: openaiApiKey || ssmCache.openaiApiKey || '',
+    stormglassApiKey: stormglassApiKey || ssmCache.stormglassApiKey || '',
   };
 }
 
@@ -125,6 +128,7 @@ function getEnv() {
       port: parseInt(process.env.PORT || '4000', 10),
       nodeEnv,
       openaiApiKey: ssmCache.openaiApiKey || process.env.OPENAI_API_KEY || '',
+      stormglassApiKey: ssmCache.stormglassApiKey || process.env.STORMGLASS_API_KEY || '',
     };
   }
 
@@ -145,6 +149,7 @@ function getEnv() {
     port: parseInt(process.env.PORT || '4000', 10),
     nodeEnv,
     openaiApiKey: process.env.OPENAI_API_KEY || '',
+    stormglassApiKey: process.env.STORMGLASS_API_KEY || '',
   };
 }
 

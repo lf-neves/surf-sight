@@ -1,7 +1,7 @@
 import { drizzleDb, users, User } from '@surf-sight/database';
 import { hashPassword, comparePassword } from './password';
 import { generateToken } from './jwt';
-import { randomBytes } from 'crypto';
+import { randomBytes, randomUUID } from 'crypto';
 import { UserFacingError } from '../errors';
 import { HttpStatusCode } from '@surf-sight/core';
 import { eq, gt, and } from 'drizzle-orm';
@@ -47,13 +47,17 @@ export class AuthService {
     // Hash password
     const hashedPassword = await hashPassword(input.password);
 
-    // Create user
+    // Create user (explicit userId for DBs that don't apply default)
+    const now = new Date();
     const result = await this.db
       .insert(users)
       .values({
+        userId: randomUUID(),
         email: input.email,
         password: hashedPassword,
         name: input.name,
+        createdAt: now,
+        updatedAt: now,
       })
       .returning();
     

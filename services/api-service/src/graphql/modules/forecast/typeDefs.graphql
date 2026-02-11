@@ -13,6 +13,8 @@ type Forecast {
 extend type Query {
   forecast(id: ID!): Forecast
   latestForecastForSpot(spotId: ID!): Forecast
+  """Forecasts for a spot in a time window (e.g. next 168 hours = 7 days). Used for charts."""
+  forecastsForSpot(spotId: ID!, nextHours: Int): [Forecast!]!
 }
 
 extend type Mutation {

@@ -13,6 +13,13 @@ provider:
     DATABASE_URL: ${env:DATABASE_URL, ''}
     SQS_QUEUE_URL: ${env:SQS_QUEUE_URL, 'http://localhost:9324/queue/forecast-queue'}
     API_ENV: ${env:API_ENV, 'development'}
+  iam:
+    role:
+      statements:
+        # Allow forecast worker to enqueue insight jobs (second queue)
+        - Effect: Allow
+          Action: sqs:SendMessage
+          Resource: !GetAtt InsightJobQueue.Arn
 
 useDotenv: true
 
@@ -59,6 +66,8 @@ functions:
   processSqsMessage:
     handler: src/handlers/handleSqsMessage.handleSqsMessage
     timeout: 300
+    environment:
+      SQS_INSIGHT_QUEUE_URL: !Ref InsightJobQueue
     # Note: Dead letter queue is configured via SQS queue RedrivePolicy in resources
     events:
       - sqs:
@@ -70,6 +79,25 @@ functions:
 
 resources:
   Resources:
+    InsightJobQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-insight-jobs
+        MessageRetentionPeriod: 345600  # 4 days
+        VisibilityTimeout: 120  # 2 minutes
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - InsightJobDLQ
+              - Arn
+          maxReceiveCount: 3
+
+    InsightJobDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-insight-jobs-dlq
+        MessageRetentionPeriod: 1209600  # 14 days
+
     ForecastServiceQueue:
       Type: AWS::SQS::Queue
       Properties:
@@ -91,6 +119,19 @@ resources:
         ReceiveMessageWaitTimeSeconds: 0
 
   Outputs:
+    InsightJobQueueArn:
+      Description: ARN of the insight jobs queue (consumed by api-service agents)
+      Value:
+        Fn::GetAtt:
+          - InsightJobQueue
+          - Arn
+      Export:
+        Name: ${self:service}-${self:provider.stage}-insight-queue-arn
+    InsightJobQueueUrl:
+      Description: URL of the insight jobs queue
+      Value: !Ref InsightJobQueue
+      Export:
+        Name: ${self:service}-${self:provider.stage}-insight-queue-url
     ForecastServiceQueueArn:
       Description: ARN of the main SQS Queue
       Value:

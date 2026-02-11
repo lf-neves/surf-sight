@@ -9,8 +9,10 @@
     "db:migrate": "drizzle-kit migrate",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "echo 'Seed script needs to be migrated to Drizzle'",
+    "db:seed": "tsx src/seeders/run.ts",
     "db:seed:spots": "tsx src/seeders/spots.seeder.ts",
+    "db:seed:forecasts": "tsx src/seeders/forecasts.seeder.ts",
+    "db:seed:ai-summaries": "tsx src/seeders/ai-summaries.seeder.ts",
     "lint": "eslint .",
     "type-check": "tsc --noEmit"
   },

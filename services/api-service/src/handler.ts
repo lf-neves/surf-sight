@@ -26,15 +26,15 @@ const server = new ApolloServer({
       };
     }
 
-    // For non-user-facing errors, return them as-is (raw errors)
-    // The Next.js middleware/client will convert them to user-facing errors
+    // For non-user-facing errors, log everything we have (Apollo sometimes omits originalError)
+    const err = originalError || formattedError;
     logger.error('GraphQL Error:', {
       message: formattedError.message,
-      originalError: originalError?.message,
-      stack: originalError?.stack,
-      cause: originalError?.cause,
-      code: originalError?.code,
-      detail: originalError?.detail,
+      ...(originalError && { originalError: originalError.message, originalErrorStack: originalError.stack }),
+      stack: err?.stack,
+      cause: err?.cause,
+      code: err?.code,
+      detail: err?.detail,
       extensions: formattedError.extensions,
     });
 
@@ -127,12 +127,22 @@ export const handler: any = startServerAndCreateLambdaHandler(
           throw error;
         }
         
-        logger.info('[CONTEXT] Creating context with DATABASE_URL available');
-        
         const headers = event.headers ?? {};
         const user = getUserFromRequest(
           headers as Record<string, string | string[] | undefined>
         );
+
+        let operationName = 'unknown';
+        try {
+          const body = event.body && (typeof event.body === 'string' ? JSON.parse(event.body) : event.body);
+          operationName = body?.operationName ?? (typeof body?.query === 'string' ? body.query.slice(0, 60) + '...' : 'unknown');
+        } catch {
+          /* ignore */
+        }
+        logger.info('[REQUEST]', {
+          operation: operationName,
+          auth: user ? `userId=${user.userId}` : 'unauthenticated',
+        });
 
         return createContext(user);
       } catch (error) {

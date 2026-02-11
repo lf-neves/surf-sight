@@ -1,0 +1,14 @@
+type TidePoint {
+  time: DateTime!
+  height: Float!
+  type: String
+}
+
+type TidesResult {
+  stationName: String
+  points: [TidePoint!]!
+}
+
+extend type Query {
+  tidesForSpot(spotId: ID!): TidesResult!
+}

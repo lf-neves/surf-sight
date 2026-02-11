@@ -3,5 +3,6 @@ query SpotList {
     id
     name
     slug
+    meta
   }
 }

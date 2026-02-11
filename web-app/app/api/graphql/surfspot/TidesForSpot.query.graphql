@@ -1,0 +1,10 @@
+query TidesForSpot($spotId: ID!) {
+  tidesForSpot(spotId: $spotId) {
+    stationName
+    points {
+      time
+      height
+      type
+    }
+  }
+}
