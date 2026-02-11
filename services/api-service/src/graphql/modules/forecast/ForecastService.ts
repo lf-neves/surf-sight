@@ -32,8 +32,8 @@ export class ForecastService {
       );
     }
 
-    // Add a reasonable limit to prevent timeouts
-    const maxRecords = nextHours ? Math.min(nextHours + 2, 50) : 50;
+    // Cap to avoid timeouts; allow enough for 7-day charts (e.g. 3h steps ≈ 56 points)
+    const maxRecords = nextHours ? Math.min(nextHours + 2, 100) : 50;
 
     const startTime = Date.now();
     const result = await this.db

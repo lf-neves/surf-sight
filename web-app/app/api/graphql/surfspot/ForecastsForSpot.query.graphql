@@ -1,0 +1,11 @@
+query ForecastsForSpot($spotId: ID!, $nextHours: Int) {
+  forecastsForSpot(spotId: $spotId, nextHours: $nextHours) {
+    id
+    spotId
+    timestamp
+    raw
+    source
+    createdAt
+    updatedAt
+  }
+}

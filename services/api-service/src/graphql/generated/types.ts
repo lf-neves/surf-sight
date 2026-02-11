@@ -257,6 +257,8 @@ export type GraphqlQuery = {
   dbStatus: GraphqlDatabaseStatus;
   favorites: Array<GraphqlFavoriteSpot>;
   forecast?: Maybe<GraphqlForecast>;
+  /** Forecasts for a spot in a time window (e.g. next 168 hours = 7 days). Used for charts. */
+  forecastsForSpot: Array<GraphqlForecast>;
   isFavorite: Scalars['Boolean']['output'];
   latestAISummary?: Maybe<GraphqlAiSummary>;
   latestForecastForSpot?: Maybe<GraphqlForecast>;
@@ -265,6 +267,7 @@ export type GraphqlQuery = {
   spot?: Maybe<GraphqlSpot>;
   spotBySlug?: Maybe<GraphqlSpot>;
   spots: Array<GraphqlSpot>;
+  tidesForSpot: GraphqlTidesResult;
   user?: Maybe<GraphqlUser>;
   userByEmail?: Maybe<GraphqlUser>;
   users: Array<GraphqlUser>;
@@ -278,6 +281,12 @@ export type GraphqlQueryAiSummaryArgs = {
 
 export type GraphqlQueryForecastArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type GraphqlQueryForecastsForSpotArgs = {
+  nextHours?: InputMaybe<Scalars['Int']['input']>;
+  spotId: Scalars['ID']['input'];
 };
 
 
@@ -309,6 +318,11 @@ export type GraphqlQuerySpotArgs = {
 
 export type GraphqlQuerySpotBySlugArgs = {
   slug: Scalars['String']['input'];
+};
+
+
+export type GraphqlQueryTidesForSpotArgs = {
+  spotId: Scalars['ID']['input'];
 };
 
 
@@ -370,6 +384,19 @@ export type GraphqlSubscription = {
 
 export type GraphqlSubscriptionForecastUpdatedArgs = {
   spotId: Scalars['ID']['input'];
+};
+
+export type GraphqlTidePoint = {
+  __typename?: 'TidePoint';
+  height: Scalars['Float']['output'];
+  time: Scalars['DateTime']['output'];
+  type?: Maybe<Scalars['String']['output']>;
+};
+
+export type GraphqlTidesResult = {
+  __typename?: 'TidesResult';
+  points: Array<GraphqlTidePoint>;
+  stationName?: Maybe<Scalars['String']['output']>;
 };
 
 export type GraphqlUpdateForecastInput = {
@@ -508,6 +535,8 @@ export type GraphqlResolversTypes = ResolversObject<{
   SpotType: GraphqlSpotType;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   Subscription: ResolverTypeWrapper<{}>;
+  TidePoint: ResolverTypeWrapper<GraphqlTidePoint>;
+  TidesResult: ResolverTypeWrapper<GraphqlTidesResult>;
   UpdateForecastInput: GraphqlUpdateForecastInput;
   UpdateSpotInput: GraphqlUpdateSpotInput;
   UpdateUserInput: GraphqlUpdateUserInput;
@@ -540,6 +569,8 @@ export type GraphqlResolversParentTypes = ResolversObject<{
   Spot: Spot;
   String: Scalars['String']['output'];
   Subscription: {};
+  TidePoint: GraphqlTidePoint;
+  TidesResult: GraphqlTidesResult;
   UpdateForecastInput: GraphqlUpdateForecastInput;
   UpdateSpotInput: GraphqlUpdateSpotInput;
   UpdateUserInput: GraphqlUpdateUserInput;
@@ -644,6 +675,7 @@ export type GraphqlQueryResolvers<ContextType = GraphQLContext, ParentType exten
   dbStatus?: Resolver<GraphqlResolversTypes['DatabaseStatus'], ParentType, ContextType>;
   favorites?: Resolver<Array<GraphqlResolversTypes['FavoriteSpot']>, ParentType, ContextType>;
   forecast?: Resolver<Maybe<GraphqlResolversTypes['Forecast']>, ParentType, ContextType, RequireFields<GraphqlQueryForecastArgs, 'id'>>;
+  forecastsForSpot?: Resolver<Array<GraphqlResolversTypes['Forecast']>, ParentType, ContextType, RequireFields<GraphqlQueryForecastsForSpotArgs, 'spotId'>>;
   isFavorite?: Resolver<GraphqlResolversTypes['Boolean'], ParentType, ContextType, RequireFields<GraphqlQueryIsFavoriteArgs, 'spotId'>>;
   latestAISummary?: Resolver<Maybe<GraphqlResolversTypes['AISummary']>, ParentType, ContextType, RequireFields<GraphqlQueryLatestAiSummaryArgs, 'spotId'>>;
   latestForecastForSpot?: Resolver<Maybe<GraphqlResolversTypes['Forecast']>, ParentType, ContextType, RequireFields<GraphqlQueryLatestForecastForSpotArgs, 'spotId'>>;
@@ -652,6 +684,7 @@ export type GraphqlQueryResolvers<ContextType = GraphQLContext, ParentType exten
   spot?: Resolver<Maybe<GraphqlResolversTypes['Spot']>, ParentType, ContextType, RequireFields<GraphqlQuerySpotArgs, 'id'>>;
   spotBySlug?: Resolver<Maybe<GraphqlResolversTypes['Spot']>, ParentType, ContextType, RequireFields<GraphqlQuerySpotBySlugArgs, 'slug'>>;
   spots?: Resolver<Array<GraphqlResolversTypes['Spot']>, ParentType, ContextType>;
+  tidesForSpot?: Resolver<GraphqlResolversTypes['TidesResult'], ParentType, ContextType, RequireFields<GraphqlQueryTidesForSpotArgs, 'spotId'>>;
   user?: Resolver<Maybe<GraphqlResolversTypes['User']>, ParentType, ContextType, RequireFields<GraphqlQueryUserArgs, 'id'>>;
   userByEmail?: Resolver<Maybe<GraphqlResolversTypes['User']>, ParentType, ContextType, RequireFields<GraphqlQueryUserByEmailArgs, 'email'>>;
   users?: Resolver<Array<GraphqlResolversTypes['User']>, ParentType, ContextType>;
@@ -679,6 +712,19 @@ export type GraphqlSubscriptionResolvers<ContextType = GraphQLContext, ParentTyp
   forecastUpdated?: SubscriptionResolver<GraphqlResolversTypes['Forecast'], "forecastUpdated", ParentType, ContextType, RequireFields<GraphqlSubscriptionForecastUpdatedArgs, 'spotId'>>;
 }>;
 
+export type GraphqlTidePointResolvers<ContextType = GraphQLContext, ParentType extends GraphqlResolversParentTypes['TidePoint'] = GraphqlResolversParentTypes['TidePoint']> = ResolversObject<{
+  height?: Resolver<GraphqlResolversTypes['Float'], ParentType, ContextType>;
+  time?: Resolver<GraphqlResolversTypes['DateTime'], ParentType, ContextType>;
+  type?: Resolver<Maybe<GraphqlResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
+export type GraphqlTidesResultResolvers<ContextType = GraphQLContext, ParentType extends GraphqlResolversParentTypes['TidesResult'] = GraphqlResolversParentTypes['TidesResult']> = ResolversObject<{
+  points?: Resolver<Array<GraphqlResolversTypes['TidePoint']>, ParentType, ContextType>;
+  stationName?: Resolver<Maybe<GraphqlResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
 export type GraphqlUserResolvers<ContextType = GraphQLContext, ParentType extends GraphqlResolversParentTypes['User'] = GraphqlResolversParentTypes['User']> = ResolversObject<{
   createdAt?: Resolver<GraphqlResolversTypes['DateTime'], ParentType, ContextType>;
   email?: Resolver<GraphqlResolversTypes['String'], ParentType, ContextType>;
@@ -704,6 +750,8 @@ export type GraphqlResolvers<ContextType = GraphQLContext> = ResolversObject<{
   Query?: GraphqlQueryResolvers<ContextType>;
   Spot?: GraphqlSpotResolvers<ContextType>;
   Subscription?: GraphqlSubscriptionResolvers<ContextType>;
+  TidePoint?: GraphqlTidePointResolvers<ContextType>;
+  TidesResult?: GraphqlTidesResultResolvers<ContextType>;
   User?: GraphqlUserResolvers<ContextType>;
 }>;
 

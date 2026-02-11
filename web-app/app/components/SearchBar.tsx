@@ -1,36 +1,57 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, MapPin, TrendingUp } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Search, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useSpotListQuery } from '@/lib/graphql/generated/apollo-graphql-hooks';
+import { useAppDispatch } from '@/lib/store/hooks';
+import { setSelectedSpot } from '@/lib/store/spotSlice';
 
-interface SpotSuggestion {
+function formatLocation(meta: { city?: string; region?: string; country?: string } | null | undefined): string {
+  if (!meta) return '';
+  const parts = [meta.city, meta.region, meta.country].filter(Boolean);
+  return parts.join(', ') || '';
+}
+
+interface SpotOption {
+  id: string;
   name: string;
+  slug: string;
   location: string;
-  score: number;
-  distance?: string;
 }
 
 export function SearchBar() {
+  const dispatch = useAppDispatch();
   const [searchQuery, setSearchQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
 
-  const popularSpots: SpotSuggestion[] = [
-    { name: 'Arpoador', location: 'Rio de Janeiro, RJ', score: 8.5 },
-    { name: 'Praia do Rosa', location: 'Imbituba, SC', score: 7.8 },
-    { name: 'Fernando de Noronha', location: 'Pernambuco, PE', score: 9.2 },
-    { name: 'Itamambuca', location: 'Ubatuba, SP', score: 8.1 },
-    { name: 'Praia Mole', location: 'Florianópolis, SC', score: 7.5 },
-    { name: 'Joaquina', location: 'Florianópolis, SC', score: 8.3 },
-  ];
+  const { data, loading, error } = useSpotListQuery();
 
-  const filteredSpots = searchQuery
-    ? popularSpots.filter(
-        (spot) =>
-          spot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          spot.location.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : popularSpots.slice(0, 4);
+  const spotsWithLocation = useMemo((): SpotOption[] => {
+    const spots = data?.spots ?? [];
+    return spots
+      .filter((s): s is typeof s & { id: string; name: string; slug: string } => Boolean(s?.id && s?.name && s?.slug))
+      .map((spot) => {
+        const meta = (spot as { meta?: { city?: string; region?: string; country?: string } | null }).meta;
+        return {
+          id: spot.id,
+          name: spot.name,
+          slug: spot.slug,
+          location: formatLocation(meta ?? undefined),
+        };
+      });
+  }, [data?.spots]);
+
+  const filteredSpots = useMemo(() => {
+    if (!searchQuery.trim()) return spotsWithLocation.slice(0, 6);
+    const q = searchQuery.toLowerCase();
+    return spotsWithLocation.filter(
+      (spot) =>
+        spot.name.toLowerCase().includes(q) ||
+        spot.slug.toLowerCase().includes(q) ||
+        spot.location.toLowerCase().includes(q)
+    );
+  }, [searchQuery, spotsWithLocation]);
 
   return (
     <div className="relative max-w-3xl mx-auto">
@@ -48,7 +69,7 @@ export function SearchBar() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Buscar pico de surf... (ex: Arpoador, Praia do Rosa)"
+            placeholder="Buscar pico de surf..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setIsFocused(true)}
@@ -78,40 +99,53 @@ export function SearchBar() {
               className="absolute top-full mt-2 w-full bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50"
             >
               <div className="p-2">
-                <div className="text-xs text-gray-500 px-3 py-2">
-                  {searchQuery ? 'Resultados' : 'Picos Populares'}
-                </div>
-                {filteredSpots.map((spot, index) => (
-                  <motion.button
-                    key={spot.name}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors text-left"
-                    onClick={() => {
-                      setSearchQuery(spot.name);
-                      setIsFocused(false);
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-cyan-100 to-blue-100 rounded-lg flex items-center justify-center">
-                        <MapPin className="w-5 h-5 text-cyan-600" />
-                      </div>
-                      <div>
-                        <div className="text-gray-900">{spot.name}</div>
-                        <div className="text-xs text-gray-500">
-                          {spot.location}
-                        </div>
-                      </div>
+                {loading && (
+                  <div className="text-sm text-gray-500 px-3 py-4 text-center">
+                    Carregando picos...
+                  </div>
+                )}
+                {error && (
+                  <div className="text-sm text-red-500 px-3 py-4 text-center">
+                    Não foi possível carregar os picos. Tente novamente.
+                  </div>
+                )}
+                {!loading && !error && (
+                  <>
+                    <div className="text-xs text-gray-500 px-3 py-2">
+                      {searchQuery ? 'Resultados' : 'Picos disponíveis'}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="px-2 py-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg text-sm">
-                        {spot.score}
+                    {filteredSpots.length === 0 ? (
+                      <div className="text-sm text-gray-500 px-3 py-4 text-center">
+                        Nenhum pico encontrado.
                       </div>
-                      <TrendingUp className="w-4 h-4 text-green-500" />
-                    </div>
-                  </motion.button>
-                ))}
+                    ) : (
+                      filteredSpots.map((spot, index) => (
+                        <motion.button
+                          key={spot.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors text-left"
+                          onClick={() => {
+                            dispatch(setSelectedSpot({ id: spot.id, name: spot.name, slug: spot.slug }));
+                            setSearchQuery(spot.name);
+                            setIsFocused(false);
+                          }}
+                        >
+                          <div className="w-10 h-10 bg-gradient-to-br from-cyan-100 to-blue-100 rounded-lg flex items-center justify-center shrink-0">
+                            <MapPin className="w-5 h-5 text-cyan-600" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-gray-900 truncate">{spot.name}</div>
+                            {spot.location && (
+                              <div className="text-xs text-gray-500 truncate">{spot.location}</div>
+                            )}
+                          </div>
+                        </motion.button>
+                      ))
+                    )}
+                  </>
+                )}
               </div>
             </motion.div>
           )}

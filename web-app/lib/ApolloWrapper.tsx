@@ -54,13 +54,11 @@ export function ApolloClientWrapper({
 
           if (error.graphQLErrors) {
             error.graphQLErrors.forEach((graphQLError) => {
-              // Handle authentication errors
+              // Handle explicit auth errors only (avoid redirect on server log messages like "jwt expired")
               if (
                 graphQLError.extensions?.code === "UNAUTHENTICATED" ||
                 graphQLError.extensions?.statusCode === HttpStatusCode.UNAUTHORIZED ||
-                graphQLError.message.includes("Authentication required") ||
-                graphQLError.message.includes("Invalid") ||
-                graphQLError.message.includes("expired")
+                graphQLError.message.includes("Authentication required")
               ) {
                 // Clear auth data and redirect to login
                 if (typeof window !== "undefined") {

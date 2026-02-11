@@ -107,15 +107,18 @@ export function getUserFromRequest(
       email: decoded.email as string,
     };
   } catch (error) {
-    // Handle JWT verification errors
-    if (error instanceof jwt.JsonWebTokenError) {
-      logger.warn('Invalid JWT token:', error.message);
-    } else if (error instanceof jwt.TokenExpiredError) {
-      logger.warn('JWT token expired');
-    } else if (error instanceof jwt.NotBeforeError) {
-      logger.warn('JWT token not active yet');
+    const reason =
+      error instanceof jwt.TokenExpiredError
+        ? 'expired'
+        : error instanceof jwt.JsonWebTokenError
+          ? (error as jwt.JsonWebTokenError).message
+          : error instanceof jwt.NotBeforeError
+            ? 'not_active_yet'
+            : 'unknown';
+    if (reason === 'expired') {
+      logger.info('[AUTH] JWT expired (request continues as unauthenticated)');
     } else {
-      logger.error('Error verifying JWT token:', error);
+      logger.warn('[AUTH] JWT invalid or missing', { reason });
     }
     return null;
   }

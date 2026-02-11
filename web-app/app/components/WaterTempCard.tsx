@@ -32,7 +32,10 @@ export function WaterTempCard() {
     return (
       <Card>
         <CardHeader icon={Thermometer} title="Temperatura da Água" />
-        <NoDataMessage message="Dados de temperatura não disponíveis" />
+        <NoDataMessage
+          message="Dados de temperatura não disponíveis"
+          noForecast={!!(data?.spot && !data?.spot?.latestForecastForSpot)}
+        />
       </Card>
     );
   }

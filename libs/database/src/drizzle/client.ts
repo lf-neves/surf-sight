@@ -28,23 +28,40 @@ function createDrizzleClient() {
       connectionString = connectionString.replace(/\?$/, '');
     }
     
+    // Longer timeout when not in Lambda (e.g. serverless-offline, seed, migrations + remote RDS)
+    const defaultTimeout = process.env.AWS_LAMBDA_FUNCTION_NAME ? 2000 : 30000;
+    const envTimeout = process.env.DATABASE_CONNECTION_TIMEOUT_MS
+      ? Math.min(60000, Math.max(1000, parseInt(process.env.DATABASE_CONNECTION_TIMEOUT_MS, 10) || defaultTimeout))
+      : defaultTimeout;
+    const connectionTimeoutMillis = envTimeout;
+    // Local Postgres (localhost) typically doesn't use SSL; RDS and other remote DBs do
+    const isLocalHost =
+      /@localhost(\/|:|\?|$)/i.test(connectionString) ||
+      /@127\.0\.0\.1(\/|:|\?|$)/.test(connectionString);
+    const ssl = isLocalHost
+      ? false
+      : { rejectUnauthorized: false }; // RDS self-signed certs
+
     pool = new Pool({
       connectionString,
       // Connection pool settings optimized for Lambda
       max: 1, // Lambda typically uses 1 connection per instance
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
-      // Explicitly configure SSL for RDS
-      // RDS uses self-signed certificates, so we need to disable strict verification
-      // This ensures SSL encryption is used but certificate validation is skipped
-      ssl: {
-        rejectUnauthorized: false, // Accept RDS self-signed certificates
-      },
+      connectionTimeoutMillis,
+      // Keep TCP connection alive so remote DBs (RDS) don't close idle connections
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 10000,
+      ssl,
     });
 
-    // Handle pool errors
+    // On pool error (e.g. connection dropped), clear refs so next use creates a new pool
     pool.on('error', (err) => {
       console.error('Unexpected error on idle client', err);
+      const p = pool;
+      pool = null;
+      db = null;
+      _drizzleDb = null;
+      if (p) p.end().catch(() => {});
     });
   }
 
@@ -65,6 +82,23 @@ function getDrizzleDb() {
     _drizzleDb = createDrizzleClient();
   }
   return _drizzleDb;
+}
+
+/**
+ * Resets the connection pool (ends it and clears cached refs).
+ * Next DB access will create a new pool. Use after connection errors to recover.
+ */
+export async function resetDatabasePool(): Promise<void> {
+  if (pool) {
+    try {
+      await pool.end();
+    } catch (e) {
+      console.error('[database] Error ending pool:', e);
+    }
+    pool = null;
+  }
+  db = null;
+  _drizzleDb = null;
 }
 
 // Export as a Proxy to maintain backward compatibility

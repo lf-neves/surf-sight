@@ -24,9 +24,11 @@ provider:
             - arn:aws:ssm:us-east-2:*:parameter/surf-sight/*
   environment:
     NODE_ENV: production
-    DATABASE_URL: ${ssm:/surf-sight/db/url}
-    JWT_SECRET: ${ssm:/surf-sight/api/jwt-secret}
+    # Prefer .env DATABASE_URL for local dev (serverless offline); otherwise use SSM (deploy)
+    DATABASE_URL: ${env:DATABASE_URL, ssm:/surf-sight/db/url}
+    JWT_SECRET: ${env:JWT_SECRET, ssm:/surf-sight/api/jwt-secret}
     OPENAI_API_KEY: ${ssm:/surf-sight/api/openai-api-key}
+    STORMGLASS_API_KEY: ${env:STORMGLASS_API_KEY, ssm:/surf-sight/api/stormglass-api-key, ''}
     TYPESENSE_HOST: ${ssm:/surf-sight/api/typesense-host, 'localhost'}
     TYPESENSE_PORT: ${ssm:/surf-sight/api/typesense-port, '8108'}
     TYPESENSE_PROTOCOL: ${ssm:/surf-sight/api/typesense-protocol, 'http'}

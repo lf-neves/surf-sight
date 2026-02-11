@@ -32,7 +32,10 @@ export function WaveVisualization() {
   if (!parsed || !latestForecast) {
     return (
       <div className="bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-400 rounded-2xl p-6 text-white text-center">
-        <NoDataMessage message="Visualização não disponível" />
+        <NoDataMessage
+          message="Visualização não disponível"
+          noForecast={!!(data?.spot && !latestForecast)}
+        />
       </div>
     );
   }

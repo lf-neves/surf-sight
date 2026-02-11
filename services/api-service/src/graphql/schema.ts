@@ -91,6 +91,7 @@ import {
   favoriteMutationResolvers,
   favoriteSubscriptionResolvers,
 } from './modules/favorite-spot/resolvers';
+import { tidePointResolvers, tideQueryResolvers } from './modules/tide/resolvers';
 import { healthQueryResolvers } from './modules/health/resolvers';
 import {
   authPayloadResolvers,
@@ -110,6 +111,7 @@ const resolvers = {
     ...forecastQueryResolvers,
     ...aiQueryResolvers,
     ...favoriteQueryResolvers,
+    ...tideQueryResolvers,
     ...healthQueryResolvers,
   },
   Mutation: {
@@ -129,6 +131,7 @@ const resolvers = {
   AISummary: aiResolvers,
   User: userResolvers,
   FavoriteSpot: favoriteResolvers,
+  TidePoint: tidePointResolvers,
   AuthPayload: authPayloadResolvers,
 };
 

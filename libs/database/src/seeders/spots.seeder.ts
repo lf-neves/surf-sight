@@ -1,7 +1,17 @@
-import { drizzleDb } from '../drizzle/client';
+import { randomUUID } from 'node:crypto';
+import { drizzleDb, resetDatabasePool } from '../drizzle/client';
 import { spots as spotsTable } from '../drizzle/schema';
 import type { SpotType } from '../drizzle/schema/enums';
 import { eq } from 'drizzle-orm';
+
+function isConnectionError(error: unknown): boolean {
+  const msg = String((error as any)?.message ?? '');
+  const causeMsg = String((error as any)?.cause?.message ?? '');
+  return (
+    /connection timeout|Connection terminated|ECONNRESET|ECONNREFUSED/i.test(msg) ||
+    /connection timeout|Connection terminated|ECONNRESET|ECONNREFUSED/i.test(causeMsg)
+  );
+}
 
 interface SpotData {
   name: string;
@@ -344,6 +354,41 @@ const spots: SpotData[] = [
   },
 ];
 
+async function seedOneSpot(spotData: SpotData): Promise<'created' | 'updated'> {
+  const existing = await drizzleDb
+    .select()
+    .from(spotsTable)
+    .where(eq(spotsTable.slug, spotData.slug))
+    .limit(1);
+
+  if (existing.length > 0) {
+    await drizzleDb
+      .update(spotsTable)
+      .set({
+        name: spotData.name,
+        lat: spotData.lat,
+        lon: spotData.lon,
+        type: spotData.type,
+        meta: spotData.meta,
+      })
+      .where(eq(spotsTable.slug, spotData.slug));
+    return 'updated';
+  }
+  const now = new Date();
+  await drizzleDb.insert(spotsTable).values({
+    spotId: randomUUID(),
+    name: spotData.name,
+    slug: spotData.slug,
+    lat: spotData.lat,
+    lon: spotData.lon,
+    type: spotData.type,
+    meta: spotData.meta,
+    createdAt: now,
+    updatedAt: now,
+  });
+  return 'created';
+}
+
 export async function seedSpots() {
   console.log('🌊 Starting spots seeder...');
 
@@ -352,41 +397,23 @@ export async function seedSpots() {
 
   for (const spotData of spots) {
     try {
-      // Check if spot already exists
-      const existing = await drizzleDb
-        .select()
-        .from(spotsTable)
-        .where(eq(spotsTable.slug, spotData.slug))
-        .limit(1);
-
-      if (existing.length > 0) {
-        // Update existing spot
-        await drizzleDb
-          .update(spotsTable)
-          .set({
-            name: spotData.name,
-            lat: spotData.lat,
-            lon: spotData.lon,
-            type: spotData.type,
-            meta: spotData.meta,
-          })
-          .where(eq(spotsTable.slug, spotData.slug));
-        updated++;
-      } else {
-        // Create new spot
-        await drizzleDb.insert(spotsTable).values({
-          name: spotData.name,
-          slug: spotData.slug,
-          lat: spotData.lat,
-          lon: spotData.lon,
-          type: spotData.type,
-          meta: spotData.meta,
-        });
-        created++;
-      }
-
+      const result = await seedOneSpot(spotData);
+      if (result === 'created') created++;
+      else updated++;
     } catch (error) {
-      console.error(`❌ Failed to seed spot ${spotData.name}:`, error);
+      if (isConnectionError(error)) {
+        console.warn(`⚠️ Connection error for ${spotData.name}, resetting pool and retrying once...`);
+        await resetDatabasePool();
+        try {
+          const result = await seedOneSpot(spotData);
+          if (result === 'created') created++;
+          else updated++;
+        } catch (retryError) {
+          console.error(`❌ Failed to seed spot ${spotData.name}:`, retryError);
+        }
+      } else {
+        console.error(`❌ Failed to seed spot ${spotData.name}:`, error);
+      }
     }
   }
 
