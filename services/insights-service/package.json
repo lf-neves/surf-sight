@@ -1,0 +1,22 @@
+{
+  "name": "@surf-sight/insights-service",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/handler.ts",
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "deploy": "serverless deploy",
+    "invoke:local": "serverless invoke local -f processInsightJob --path events/sqs-event.json"
+  },
+  "dependencies": {
+    "@surf-sight/api-service": "workspace:*",
+    "@surf-sight/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145",
+    "@types/node": "^22.10.2",
+    "serverless": "^4.0.0",
+    "typescript": "^5.7.2"
+  }
+}

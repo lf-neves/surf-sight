@@ -3,6 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "main": "./dist/handler.js",
+  "exports": {
+    ".": "./dist/handler.js",
+    "./insights": {
+      "types": "./src/insights/runInsightGeneration.d.ts",
+      "default": "./dist/insights/runInsightGeneration.js"
+    }
+  },
   "scripts": {
     "dev": "serverless offline --stage local --httpPort 4000",
     "build": "rm -rf dist && tsc && cp -R src/graphql/modules dist/graphql/",

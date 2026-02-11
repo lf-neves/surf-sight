@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { seedSpots } from './spots.seeder';
 import { seedForecasts } from './forecasts.seeder';
+import { seedAISummaries } from './ai-summaries.seeder';
 
 async function main() {
   if (!process.env.DATABASE_URL) {
@@ -11,6 +12,8 @@ async function main() {
   await seedSpots();
   console.log('');
   await seedForecasts();
+  console.log('');
+  await seedAISummaries();
   console.log('\n✅ Seed completed.');
 }
 

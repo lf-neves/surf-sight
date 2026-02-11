@@ -12,6 +12,7 @@
     "db:seed": "tsx src/seeders/run.ts",
     "db:seed:spots": "tsx src/seeders/spots.seeder.ts",
     "db:seed:forecasts": "tsx src/seeders/forecasts.seeder.ts",
+    "db:seed:ai-summaries": "tsx src/seeders/ai-summaries.seeder.ts",
     "lint": "eslint .",
     "type-check": "tsc --noEmit"
   },

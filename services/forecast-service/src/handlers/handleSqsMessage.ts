@@ -1,9 +1,14 @@
-import { logger } from '@surf-sight/core';
-import { drizzleDb, ForecastServiceEvent } from '@surf-sight/database';
+import { logger, sqsEnqueueWithLocalSupport } from '@surf-sight/core';
+import { drizzleDb, spots } from '@surf-sight/database';
 import { forecastServiceEvents } from '@surf-sight/database';
 import { eq } from 'drizzle-orm';
 import assert from 'node:assert/strict';
-import { processForecastServiceEvent } from '../modules/processForecastServiceEvent';
+import {
+  processForecastServiceEvent,
+  persistForecastForSpot,
+} from '../modules/processForecastServiceEvent';
+import { StormglassForecastProvider } from '../providers/StormglassForecastProvider';
+import { ProviderResponse } from '../providers/types';
 
 type SQSEvent = {
   Records: {
@@ -17,9 +22,63 @@ type SQSRecord = {
   awsRequestId: string;
 };
 
-export const handleSqsMessage = async (event: SQSEvent): Promise<void> => {
-  const { forecastServiceEventId } = JSON.parse(event.Records[0].body);
+type ForecastJobBody = { spotId: string };
+type LegacyEventBody = { forecastServiceEventId: string };
 
+function parseProviderResponseDates(rawForecast: any): ProviderResponse {
+  if (!rawForecast.points || !Array.isArray(rawForecast.points)) {
+    throw new Error(
+      `Invalid forecast data: points array is missing or invalid. Received: ${JSON.stringify(rawForecast)}`
+    );
+  }
+  return {
+    ...rawForecast,
+    fetchedAt: new Date(rawForecast.fetchedAt),
+    points: rawForecast.points.map((point: any) => ({
+      ...point,
+      time: new Date(point.time),
+    })),
+  };
+}
+
+export const handleSqsMessage = async (event: SQSEvent): Promise<void> => {
+  const body = JSON.parse(event.Records[0].body) as ForecastJobBody | LegacyEventBody;
+
+  // New flow: message is { spotId } — worker fetches from Stormglass then persists
+  if ('spotId' in body && body.spotId) {
+    const { spotId } = body;
+    const spotResults = await drizzleDb
+      .select()
+      .from(spots)
+      .where(eq(spots.spotId, spotId))
+      .limit(1);
+    const spot = spotResults[0] || null;
+    assert(spot, `Spot[${spotId}] not found.`);
+
+    logger.info('Fetching forecast from Stormglass for Spot[%s].', spotId);
+    const forecastProvider = new StormglassForecastProvider();
+    const rawResponse = await forecastProvider.fetchForecast({
+      lat: spot.lat,
+      lng: spot.lon,
+      start: new Date(),
+      end: new Date(),
+    });
+    const forecast = parseProviderResponseDates(rawResponse);
+    await persistForecastForSpot(spotId, forecast);
+    logger.info('Persisted forecast for Spot[%s]. Enqueuing insight job.', spotId);
+
+    const insightQueueUrl = process.env.SQS_INSIGHT_QUEUE_URL;
+    if (insightQueueUrl) {
+      await sqsEnqueueWithLocalSupport({
+        queueUrl: insightQueueUrl,
+        messageBody: JSON.stringify({ spotId }),
+      });
+    }
+    return;
+  }
+
+  // Legacy flow: message is { forecastServiceEventId }
+  const { forecastServiceEventId } = body as LegacyEventBody;
   const forecastServiceEventResults = await drizzleDb
     .select()
     .from(forecastServiceEvents)
@@ -47,7 +106,6 @@ export const handleSqsMessage = async (event: SQSEvent): Promise<void> => {
       'ForecastServiceEvent[%s] is already processed.',
       forecastServiceEventId
     );
-
     return;
   }
 
@@ -64,7 +122,6 @@ export const handleSqsMessage = async (event: SQSEvent): Promise<void> => {
         processingStatus: 'failed',
       })
       .where(eq(forecastServiceEvents.forecastServiceEventId, forecastServiceEventId));
-
     throw new Error(
       `ForecastServiceEvent[${forecastServiceEventId}] has retried 3 times and failed.`
     );
@@ -72,9 +129,7 @@ export const handleSqsMessage = async (event: SQSEvent): Promise<void> => {
 
   try {
     logger.info('Processing ForecastServiceEvent[%s].', forecastServiceEventId);
-
     await processForecastServiceEvent({ forecastServiceEvent });
-
     await drizzleDb
       .update(forecastServiceEvents)
       .set({
@@ -88,7 +143,6 @@ export const handleSqsMessage = async (event: SQSEvent): Promise<void> => {
         retries: forecastServiceEvent.retries + 1,
       })
       .where(eq(forecastServiceEvents.forecastServiceEventId, forecastServiceEventId));
-
     throw error;
   }
 };

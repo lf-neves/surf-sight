@@ -1,0 +1,34 @@
+service: insights-service
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  stage: ${opt:stage, 'development'}
+  region: ${env:AWS_REGION, 'us-east-1'}
+  environment:
+    DATABASE_URL: ${env:DATABASE_URL, ''}
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
+
+useDotenv: true
+
+build:
+  esbuild:
+    bundle: true
+    sourcemap: true
+    target: node22
+    platform: node
+    format: cjs
+
+package:
+  individually: true
+  excludeDevDependencies: true
+
+functions:
+  processInsightJob:
+    handler: src/handler.handler
+    timeout: 120
+    events:
+      - sqs:
+          arn:
+            Fn::ImportValue: forecast-service-${self:provider.stage}-insight-queue-arn
+          batchSize: 1

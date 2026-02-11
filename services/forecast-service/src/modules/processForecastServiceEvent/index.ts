@@ -31,13 +31,36 @@ function parseProviderResponseDates(rawForecast: any): ProviderResponse {
   };
 }
 
+/**
+ * Persist a provider forecast response to the forecasts table.
+ * Used by the worker after fetching from Stormglass (and by legacy event processing).
+ */
+export async function persistForecastForSpot(
+  spotId: string,
+  forecast: ProviderResponse
+): Promise<void> {
+  validateForecastProviderResponseData(forecast);
+  logger.info(
+    'Will create %d Forecast records for Spot[%s].',
+    forecast.points.length,
+    spotId
+  );
+  await drizzleDb.insert(forecasts).values(
+    forecast.points.map((point) => ({
+      spotId,
+      timestamp: point.time,
+      raw: point,
+      source: forecast.provider,
+    }))
+  );
+}
+
 export async function processForecastServiceEvent({
   forecastServiceEvent,
 }: {
   forecastServiceEvent: ForecastServiceEvent;
 }) {
   const { payload } = forecastServiceEvent;
-  // Handle both string (from SQS) and object (from Prisma) payloads
   const eventPayload =
     typeof payload === 'string'
       ? (JSON.parse(payload) as ForecastEventPayload)
@@ -63,25 +86,7 @@ export async function processForecastServiceEvent({
     );
   }
 
-  // Parse dates from JSON strings to Date objects
   const rawForecast = eventPayload.forecast;
   const forecast = parseProviderResponseDates(rawForecast);
-
-  // Validate the forecast data
-  validateForecastProviderResponseData(forecast);
-
-  logger.info(
-    'Will create %d Forecast records for Spot[%s].',
-    forecast.points.length,
-    spotId
-  );
-
-  await drizzleDb.insert(forecasts).values(
-    forecast.points.map((point) => ({
-      spotId,
-      timestamp: point.time,
-      raw: point,
-      source: forecast.provider,
-    }))
-  );
+  await persistForecastForSpot(spotId, forecast);
 }
