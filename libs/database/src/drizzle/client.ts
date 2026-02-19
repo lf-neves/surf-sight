@@ -114,7 +114,7 @@ export async function resetDatabasePool(): Promise<void> {
 export const drizzleDb = new Proxy({} as ReturnType<typeof drizzle>, {
   get(_target, prop) {
     const db = getDrizzleDb();
-    const value = (db as Record<string | symbol, unknown>)[prop];
+    const value = (db as unknown as Record<string | symbol, unknown>)[prop];
     // If it's a function, bind it to the db instance
     if (typeof value === 'function') {
       return value.bind(db);
