@@ -1,4 +1,11 @@
-import { pgTable, uuid, boolean, timestamp, primaryKey, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  boolean,
+  timestamp,
+  primaryKey,
+  index,
+} from 'drizzle-orm/pg-core';
 import { users } from './User';
 import { spots } from './Spot';
 
@@ -13,7 +20,10 @@ export const favoriteSpots = pgTable(
       .references(() => spots.spotId, { onDelete: 'cascade' }),
     notifyWhatsapp: boolean('notify_whatsapp').notNull().default(false),
     createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdate(() => new Date()),
+    updatedAt: timestamp('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.userId, table.spotId] }),

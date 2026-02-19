@@ -1,4 +1,4 @@
-import { drizzleDb, prismaClient } from '@surf-sight/database';
+import { drizzleDb } from '@surf-sight/database';
 import { PubSub } from 'graphql-subscriptions';
 import jwt from 'jsonwebtoken';
 import { logger } from '@surf-sight/core';

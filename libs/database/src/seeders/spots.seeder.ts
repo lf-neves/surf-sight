@@ -5,11 +5,16 @@ import type { SpotType } from '../drizzle/schema/enums';
 import { eq } from 'drizzle-orm';
 
 function isConnectionError(error: unknown): boolean {
-  const msg = String((error as any)?.message ?? '');
-  const causeMsg = String((error as any)?.cause?.message ?? '');
+  const err = error as { message?: string; cause?: { message?: string } };
+  const msg = String(err?.message ?? '');
+  const causeMsg = String(err?.cause?.message ?? '');
   return (
-    /connection timeout|Connection terminated|ECONNRESET|ECONNREFUSED/i.test(msg) ||
-    /connection timeout|Connection terminated|ECONNRESET|ECONNREFUSED/i.test(causeMsg)
+    /connection timeout|Connection terminated|ECONNRESET|ECONNREFUSED/i.test(
+      msg
+    ) ||
+    /connection timeout|Connection terminated|ECONNRESET|ECONNREFUSED/i.test(
+      causeMsg
+    )
   );
 }
 
@@ -402,7 +407,9 @@ export async function seedSpots() {
       else updated++;
     } catch (error) {
       if (isConnectionError(error)) {
-        console.warn(`⚠️ Connection error for ${spotData.name}, resetting pool and retrying once...`);
+        console.warn(
+          `⚠️ Connection error for ${spotData.name}, resetting pool and retrying once...`
+        );
         await resetDatabasePool();
         try {
           const result = await seedOneSpot(spotData);

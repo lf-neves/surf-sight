@@ -27,7 +27,7 @@ export default function ForgotPasswordPage() {
         },
       });
       setIsSubmitted(true);
-    } catch (err) {
+    } catch {
       // Error is handled by Apollo
     }
   };

@@ -6,7 +6,12 @@ export const userSkillLevelEnum = pgEnum('user_skill_level', [
   'advanced',
 ]);
 
-export const spotTypeEnum = pgEnum('spot_type', ['beach', 'reef', 'point', 'other']);
+export const spotTypeEnum = pgEnum('spot_type', [
+  'beach',
+  'reef',
+  'point',
+  'other',
+]);
 
 export const jobStatusEnum = pgEnum('job_status', [
   'pending',
@@ -16,6 +21,6 @@ export const jobStatusEnum = pgEnum('job_status', [
 ]);
 
 // Export enum types for TypeScript
-export type UserSkillLevel = typeof userSkillLevelEnum.enumValues[number];
-export type SpotType = typeof spotTypeEnum.enumValues[number];
-export type JobStatus = typeof jobStatusEnum.enumValues[number];
+export type UserSkillLevel = (typeof userSkillLevelEnum.enumValues)[number];
+export type SpotType = (typeof spotTypeEnum.enumValues)[number];
+export type JobStatus = (typeof jobStatusEnum.enumValues)[number];

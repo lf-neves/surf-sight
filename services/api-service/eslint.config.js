@@ -11,8 +11,11 @@ module.exports = tseslint.config(
       'node_modules/**',
       'dist/**',
       'build/**',
+      '.serverless/**',
+      'scripts/**',
       '**/*.config.{js,mjs,ts}',
       '**/generated/**',
+      '**/*.d.ts',
     ],
   },
   {
@@ -26,7 +29,7 @@ module.exports = tseslint.config(
     rules: {
       '@typescript-eslint/no-unused-vars': [
         'error',
-        { argsIgnorePattern: '^_' },
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',

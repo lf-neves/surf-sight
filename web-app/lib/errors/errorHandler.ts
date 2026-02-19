@@ -18,7 +18,7 @@ export interface GraphQLError {
 
 export interface GraphQLResponse {
   errors?: GraphQLError[];
-  data?: any;
+  data?: unknown;
 }
 
 const GENERIC_ERROR_MESSAGE =
@@ -46,7 +46,7 @@ export function getUserFacingError(
 
   // Check if it's an Apollo error
   if (error && typeof error === 'object' && 'graphQLErrors' in error) {
-    const apolloError = error as any;
+    const apolloError = error as { graphQLErrors?: GraphQLError[] };
     if (apolloError.graphQLErrors && apolloError.graphQLErrors.length > 0) {
       const graphqlError = apolloError.graphQLErrors[0];
       
@@ -65,7 +65,7 @@ export function getUserFacingError(
 
   // Check if it's a network error (500, etc.)
   if (error && typeof error === 'object' && 'networkError' in error) {
-    const networkError = (error as any).networkError;
+    const networkError = (error as { networkError?: { statusCode?: number } }).networkError;
     if (networkError?.statusCode && networkError.statusCode >= HttpStatusCode.INTERNAL_SERVER_ERROR) {
       return GENERIC_ERROR_MESSAGE;
     }

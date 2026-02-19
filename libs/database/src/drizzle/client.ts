@@ -14,12 +14,15 @@ function createDrizzleClient() {
   // Reuse existing pool if available (important for Lambda)
   if (!pool) {
     let connectionString = process.env.DATABASE_URL || '';
-    
+
     // Remove SSL-related query parameters from connection string
     // We'll handle SSL configuration via the ssl object to have full control
     connectionString = connectionString.replace(/[?&]sslmode=[^&]*/g, '');
-    connectionString = connectionString.replace(/[?&]uselibpqcompat=[^&]*/g, '');
-    
+    connectionString = connectionString.replace(
+      /[?&]uselibpqcompat=[^&]*/g,
+      ''
+    );
+
     // Clean up any double ? or trailing & or ?&
     connectionString = connectionString.replace(/\?&+/g, '?');
     connectionString = connectionString.replace(/[?&]$/, '');
@@ -27,20 +30,25 @@ function createDrizzleClient() {
       // Remove trailing ? if no params remain
       connectionString = connectionString.replace(/\?$/, '');
     }
-    
+
     // Longer timeout when not in Lambda (e.g. serverless-offline, seed, migrations + remote RDS)
     const defaultTimeout = process.env.AWS_LAMBDA_FUNCTION_NAME ? 2000 : 30000;
     const envTimeout = process.env.DATABASE_CONNECTION_TIMEOUT_MS
-      ? Math.min(60000, Math.max(1000, parseInt(process.env.DATABASE_CONNECTION_TIMEOUT_MS, 10) || defaultTimeout))
+      ? Math.min(
+          60000,
+          Math.max(
+            1000,
+            parseInt(process.env.DATABASE_CONNECTION_TIMEOUT_MS, 10) ||
+              defaultTimeout
+          )
+        )
       : defaultTimeout;
     const connectionTimeoutMillis = envTimeout;
     // Local Postgres (localhost) typically doesn't use SSL; RDS and other remote DBs do
     const isLocalHost =
       /@localhost(\/|:|\?|$)/i.test(connectionString) ||
       /@127\.0\.0\.1(\/|:|\?|$)/.test(connectionString);
-    const ssl = isLocalHost
-      ? false
-      : { rejectUnauthorized: false }; // RDS self-signed certs
+    const ssl = isLocalHost ? false : { rejectUnauthorized: false }; // RDS self-signed certs
 
     pool = new Pool({
       connectionString,
@@ -106,7 +114,7 @@ export async function resetDatabasePool(): Promise<void> {
 export const drizzleDb = new Proxy({} as ReturnType<typeof drizzle>, {
   get(_target, prop) {
     const db = getDrizzleDb();
-    const value = (db as any)[prop];
+    const value = (db as Record<string | symbol, unknown>)[prop];
     // If it's a function, bind it to the db instance
     if (typeof value === 'function') {
       return value.bind(db);

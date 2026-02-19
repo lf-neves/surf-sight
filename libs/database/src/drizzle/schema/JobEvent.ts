@@ -1,4 +1,11 @@
-import { pgTable, uuid, varchar, jsonb, timestamp, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  jsonb,
+  timestamp,
+  index,
+} from 'drizzle-orm/pg-core';
 import { jobStatusEnum } from './enums';
 
 export const jobEvents = pgTable(
@@ -9,7 +16,10 @@ export const jobEvents = pgTable(
     payload: jsonb('payload').default({}),
     status: jobStatusEnum('status').notNull().default('pending'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdate(() => new Date()),
+    updatedAt: timestamp('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   },
   (table) => ({
     statusIdx: index('job_events_status_idx').on(table.status),

@@ -1,4 +1,11 @@
-import { pgTable, uuid, text, jsonb, timestamp, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  text,
+  jsonb,
+  timestamp,
+  index,
+} from 'drizzle-orm/pg-core';
 import { forecasts } from './Forecast';
 import { spots } from './Spot';
 
@@ -16,7 +23,10 @@ export const aiSummaries = pgTable(
     structured: jsonb('structured').default({}),
     modelInfo: jsonb('model_info').default({}),
     createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdate(() => new Date()),
+    updatedAt: timestamp('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   },
   (table) => ({
     spotIdIdx: index('ai_summaries_spot_id_idx').on(table.spotId),

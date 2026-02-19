@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, HTMLAttributes } from 'react';
+import { HTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 export interface SectionProps extends HTMLAttributes<HTMLDivElement> {
@@ -32,9 +32,13 @@ export function Section({
   overflow = false,
   ...props
 }: SectionProps) {
-  const baseGradient = gradient || 
-    (variant === 'hero' ? 'from-cyan-50 via-blue-50 to-teal-50' : 
-     variant === 'gradient' ? 'from-indigo-50 via-blue-50 to-cyan-50' : '');
+  const baseGradient =
+    gradient ||
+    (variant === 'hero'
+      ? 'from-cyan-50 via-blue-50 to-teal-50'
+      : variant === 'gradient'
+        ? 'from-indigo-50 via-blue-50 to-cyan-50'
+        : '');
 
   return (
     <div

@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, HTMLAttributes } from 'react';
+import { HTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 export interface CardContentProps extends HTMLAttributes<HTMLDivElement> {
@@ -29,9 +29,10 @@ export function CardContent({
   padding = 'md',
   ...props
 }: CardContentProps) {
-  const variantClass = variant === 'gradient' && gradient 
-    ? `${variantClasses[variant]} ${gradient}` 
-    : variantClasses[variant];
+  const variantClass =
+    variant === 'gradient' && gradient
+      ? `${variantClasses[variant]} ${gradient}`
+      : variantClasses[variant];
 
   return (
     <div

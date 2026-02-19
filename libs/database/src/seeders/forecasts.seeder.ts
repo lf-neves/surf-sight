@@ -1,14 +1,19 @@
 import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
 import { drizzleDb, resetDatabasePool } from '../drizzle/client';
-import { forecasts as forecastsTable, spots as spotsTable } from '../drizzle/schema';
+import {
+  forecasts as forecastsTable,
+  spots as spotsTable,
+} from '../drizzle/schema';
 
 function isConnectionError(error: unknown): boolean {
-  const msg = String((error as any)?.message ?? '');
-  const causeMsg = String((error as any)?.cause?.message ?? '');
+  const err = error as { message?: string; cause?: { message?: string } };
+  const msg = String(err?.message ?? '');
+  const causeMsg = String(err?.cause?.message ?? '');
   return (
-    /connection timeout|Connection terminated|ECONNRESET|ECONNREFUSED/i.test(msg) ||
-    /connection timeout|Connection terminated|ECONNREFUSED/i.test(causeMsg)
+    /connection timeout|Connection terminated|ECONNRESET|ECONNREFUSED/i.test(
+      msg
+    ) || /connection timeout|Connection terminated|ECONNREFUSED/i.test(causeMsg)
   );
 }
 
@@ -26,7 +31,9 @@ interface RawForecast {
   time: string; // ISO
 }
 
-function buildRaw(overrides: Partial<RawForecast> & { time: string }): RawForecast {
+function buildRaw(
+  overrides: Partial<RawForecast> & { time: string }
+): RawForecast {
   return {
     waveHeight: 1.2,
     wavePeriod: 11,
@@ -49,7 +56,9 @@ export async function seedForecasts() {
     .from(spotsTable);
 
   if (spotRows.length === 0) {
-    console.log('   No spots found. Run spots seeder first (pnpm run db:seed).');
+    console.log(
+      '   No spots found. Run spots seeder first (pnpm run db:seed).'
+    );
     return;
   }
 
@@ -63,9 +72,24 @@ export async function seedForecasts() {
   for (const { spotId } of spotRows) {
     const timestamps = [now, sixHoursAgo, twelveHoursAgo];
     const raws: RawForecast[] = [
-      buildRaw({ time: now.toISOString(), waveHeight: 1.5, swellHeight: 1.5, windSpeed: 5 }),
-      buildRaw({ time: sixHoursAgo.toISOString(), waveHeight: 1.2, swellHeight: 1.2, windSpeed: 6 }),
-      buildRaw({ time: twelveHoursAgo.toISOString(), waveHeight: 1.0, swellHeight: 1.0, windSpeed: 4 }),
+      buildRaw({
+        time: now.toISOString(),
+        waveHeight: 1.5,
+        swellHeight: 1.5,
+        windSpeed: 5,
+      }),
+      buildRaw({
+        time: sixHoursAgo.toISOString(),
+        waveHeight: 1.2,
+        swellHeight: 1.2,
+        windSpeed: 6,
+      }),
+      buildRaw({
+        time: twelveHoursAgo.toISOString(),
+        waveHeight: 1.0,
+        swellHeight: 1.0,
+        windSpeed: 4,
+      }),
     ];
 
     const nowForRow = new Date();
@@ -84,11 +108,15 @@ export async function seedForecasts() {
             createdAt: nowForRow,
             updatedAt: nowForRow,
           })
-          .onConflictDoNothing({ target: [forecastsTable.spotId, forecastsTable.timestamp] });
+          .onConflictDoNothing({
+            target: [forecastsTable.spotId, forecastsTable.timestamp],
+          });
         ok++;
       } catch (error) {
         if (isConnectionError(error)) {
-          console.warn(`⚠️ Connection error for spot ${spotId}, resetting pool and retrying once...`);
+          console.warn(
+            `⚠️ Connection error for spot ${spotId}, resetting pool and retrying once...`
+          );
           await resetDatabasePool();
           try {
             await drizzleDb
@@ -102,14 +130,22 @@ export async function seedForecasts() {
                 createdAt: nowForRow,
                 updatedAt: nowForRow,
               })
-              .onConflictDoNothing({ target: [forecastsTable.spotId, forecastsTable.timestamp] });
+              .onConflictDoNothing({
+                target: [forecastsTable.spotId, forecastsTable.timestamp],
+              });
             ok++;
           } catch (retryError) {
-            console.error(`❌ Failed to seed forecast for spot ${spotId}:`, retryError);
+            console.error(
+              `❌ Failed to seed forecast for spot ${spotId}:`,
+              retryError
+            );
             failed++;
           }
         } else {
-          console.error(`❌ Failed to seed forecast for spot ${spotId}:`, error);
+          console.error(
+            `❌ Failed to seed forecast for spot ${spotId}:`,
+            error
+          );
           failed++;
         }
       }
@@ -119,7 +155,9 @@ export async function seedForecasts() {
   const total = spotRows.length * 3;
   console.log(`✅ Forecasts seeder completed!`);
   console.log(`   Spots with forecasts: ${spotRows.length}`);
-  console.log(`   Forecast points: ${ok} ok, ${failed} failed (3 per spot: latest, -6h, -12h)`);
+  console.log(
+    `   Forecast points: ${total} total (${ok} ok, ${failed} failed, 3 per spot: latest, -6h, -12h)`
+  );
 }
 
 if (require.main === module) {

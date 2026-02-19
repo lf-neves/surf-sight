@@ -1,4 +1,12 @@
-import { pgTable, uuid, varchar, doublePrecision, jsonb, timestamp, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  doublePrecision,
+  jsonb,
+  timestamp,
+  index,
+} from 'drizzle-orm/pg-core';
 import { spotTypeEnum } from './enums';
 
 export const spots = pgTable(
@@ -12,7 +20,10 @@ export const spots = pgTable(
     type: spotTypeEnum('type').notNull(),
     meta: jsonb('meta').default({}),
     createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdate(() => new Date()),
+    updatedAt: timestamp('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   },
   (table) => ({
     slugIdx: index('spots_slug_idx').on(table.slug),

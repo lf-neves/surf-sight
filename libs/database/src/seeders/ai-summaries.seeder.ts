@@ -5,11 +5,16 @@ import { aiSummaries, forecasts, spots } from '../drizzle/schema';
 import { eq, desc } from 'drizzle-orm';
 
 function isConnectionError(error: unknown): boolean {
-  const msg = String((error as any)?.message ?? '');
-  const causeMsg = String((error as any)?.cause?.message ?? '');
+  const err = error as { message?: string; cause?: { message?: string } };
+  const msg = String(err?.message ?? '');
+  const causeMsg = String(err?.cause?.message ?? '');
   return (
-    /connection timeout|Connection terminated|ECONNRESET|ECONNREFUSED/i.test(msg) ||
-    /connection timeout|Connection terminated|ECONNRESET|ECONNREFUSED/i.test(causeMsg)
+    /connection timeout|Connection terminated|ECONNRESET|ECONNREFUSED/i.test(
+      msg
+    ) ||
+    /connection timeout|Connection terminated|ECONNRESET|ECONNREFUSED/i.test(
+      causeMsg
+    )
   );
 }
 
@@ -35,12 +40,12 @@ const PLACEHOLDER_INSIGHTS = {
 export async function seedAISummaries() {
   console.log('🤖 Starting AI summaries seeder...');
 
-  const spotRows = await drizzleDb
-    .select({ spotId: spots.spotId })
-    .from(spots);
+  const spotRows = await drizzleDb.select({ spotId: spots.spotId }).from(spots);
 
   if (spotRows.length === 0) {
-    console.log('   No spots found. Run spots seeder first (pnpm run db:seed).');
+    console.log(
+      '   No spots found. Run spots seeder first (pnpm run db:seed).'
+    );
     return;
   }
 
@@ -68,7 +73,10 @@ export async function seedAISummaries() {
         forecastId: latestForecast.forecastId,
         spotId,
         summary: PLACEHOLDER_INSIGHTS.summary,
-        structured: PLACEHOLDER_INSIGHTS.structured as unknown as Record<string, unknown>,
+        structured: PLACEHOLDER_INSIGHTS.structured as unknown as Record<
+          string,
+          unknown
+        >,
         modelInfo: { source: 'seed', model: 'placeholder' },
         createdAt: now,
         updatedAt: now,
@@ -76,7 +84,9 @@ export async function seedAISummaries() {
       ok++;
     } catch (error) {
       if (isConnectionError(error)) {
-        console.warn(`⚠️ Connection error for spot ${spotId}, resetting pool and retrying once...`);
+        console.warn(
+          `⚠️ Connection error for spot ${spotId}, resetting pool and retrying once...`
+        );
         await resetDatabasePool();
         try {
           await drizzleDb.insert(aiSummaries).values({
@@ -84,18 +94,27 @@ export async function seedAISummaries() {
             forecastId: latestForecast.forecastId,
             spotId,
             summary: PLACEHOLDER_INSIGHTS.summary,
-            structured: PLACEHOLDER_INSIGHTS.structured as unknown as Record<string, unknown>,
+            structured: PLACEHOLDER_INSIGHTS.structured as unknown as Record<
+              string,
+              unknown
+            >,
             modelInfo: { source: 'seed', model: 'placeholder' },
             createdAt: now,
             updatedAt: now,
           });
           ok++;
         } catch (retryError) {
-          console.error(`❌ Failed to seed AI summary for spot ${spotId}:`, retryError);
+          console.error(
+            `❌ Failed to seed AI summary for spot ${spotId}:`,
+            retryError
+          );
           failed++;
         }
       } else {
-        console.error(`❌ Failed to seed AI summary for spot ${spotId}:`, error);
+        console.error(
+          `❌ Failed to seed AI summary for spot ${spotId}:`,
+          error
+        );
         failed++;
       }
     }

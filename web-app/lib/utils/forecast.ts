@@ -28,14 +28,17 @@ export interface ParsedForecast {
  * Parse a forecast's raw JSON data into a ForecastPoint
  * Handles various forecast data formats from different sources
  */
-export function parseForecastRaw(raw: any): ForecastPoint {
+export function parseForecastRaw(raw: unknown): ForecastPoint {
   // Handle both string and object formats
-  let data: any;
+  let data: Record<string, unknown>;
   try {
-    data = typeof raw === 'string' ? JSON.parse(raw) : raw;
-  } catch (e) {
+    data = typeof raw === 'string' ? (JSON.parse(raw) as Record<string, unknown>) : (raw as Record<string, unknown>);
+  } catch {
     // If parsing fails, try to use raw as-is or provide defaults
-    data = raw || {};
+    data =
+      raw && typeof raw === 'object'
+        ? (raw as Record<string, unknown>)
+        : {};
   }
 
   // Handle nested data structures (e.g., Stormglass format)

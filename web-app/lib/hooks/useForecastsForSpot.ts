@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { useAppSelector } from '@/lib/store/hooks';
 import { useForecastsForSpotQuery } from '@/lib/graphql/generated/apollo-graphql-hooks';
 import {
   parseForecastRaw,
@@ -31,7 +30,7 @@ export interface TransformedForecast {
   airTemperature?: number;
   surfabilityScore: number;
   // Raw data
-  raw: any;
+  raw: Record<string, unknown>;
   source: string;
   createdAt: Date;
   updatedAt: Date;

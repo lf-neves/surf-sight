@@ -90,13 +90,16 @@ try {
   );
 
   // Replace Apollo.MutationHookOptions -> MutationHookOptions
-  content = content.replace(/Apollo\.MutationHookOptions/g, 'MutationHookOptions');
+  content = content.replace(
+    /Apollo\.MutationHookOptions/g,
+    'MutationHookOptions'
+  );
 
   // Replace Apollo.MutationResult -> ReturnType<typeof useMutation>
   // This is a bit tricky - we'll use a pattern that matches the mutation name
   content = content.replace(
     /export type (\w+MutationResult) = Apollo\.MutationResult<(\w+)>;/g,
-    (match, typeName, mutationType) => {
+    (_match, typeName) => {
       // Extract base name: LoginMutationResult -> Login
       const baseName = typeName.replace(/MutationResult$/, '');
       const hookName = `use${baseName}Mutation`;
@@ -113,7 +116,7 @@ try {
   // Replace Apollo.MutationFunction - this is complex, we'll use a helper type
   content = content.replace(
     /export type (\w+MutationFn) = Apollo\.MutationFunction<(\w+),\s*(\w+)>;/g,
-    (match, typeName, mutationType, variablesType) => {
+    (_match, typeName) => {
       // Extract base name: LoginMutationFn -> Login
       const baseName = typeName.replace(/MutationFn$/, '');
       const hookName = `use${baseName}Mutation`;
@@ -129,7 +132,7 @@ try {
   // Pattern: SpotListQueryQueryResult -> useSpotListQueryQuery
   content = content.replace(
     /export\s+type\s+(\w+QueryResult)\s*=\s*Apollo\.QueryResult<(\w+),\s*(\w+)>;/g,
-    (match, typeName, queryType, variablesType) => {
+    (_match, typeName) => {
       // Extract base name: SpotQueryQueryResult -> SpotQuery
       const baseName = typeName.replace(/QueryResult$/, '');
       const hookName = `use${baseName}Query`;
@@ -152,8 +155,10 @@ try {
   );
 
   writeFileSync(hooksFile, content, 'utf-8');
+  // eslint-disable-next-line no-console -- script output
   console.log('✅ Fixed Apollo Client imports in generated hooks');
 } catch (error) {
+  // eslint-disable-next-line no-console -- script output
   console.error('❌ Error fixing Apollo imports:', error);
   process.exit(1);
 }

@@ -48,7 +48,13 @@ export function ApolloClientWrapper({
         });
 
         // Error link to handle token expiration, auth errors, and convert raw errors to user-facing
-        const errorLink = onError((error: any) => {
+        const errorLink = onError((error: {
+          graphQLErrors?: Array<{
+            message: string;
+            extensions?: { code?: string; statusCode?: number; isUserFacing?: boolean };
+          }>;
+          networkError?: { statusCode?: number };
+        }) => {
           const GENERIC_ERROR_MESSAGE =
             "Something went wrong. We're investigating the problem and will reach out to you when we solve it.";
 
@@ -88,7 +94,7 @@ export function ApolloClientWrapper({
 
           if (error.networkError) {
             // Handle network errors that might indicate auth issues
-            const networkError = error.networkError as any;
+            const networkError = error.networkError as { statusCode?: number };
             
             if (networkError.statusCode === HttpStatusCode.UNAUTHORIZED) {
               if (typeof window !== "undefined") {
@@ -111,7 +117,7 @@ export function ApolloClientWrapper({
                   statusCode: networkError.statusCode || HttpStatusCode.INTERNAL_SERVER_ERROR,
                   isUserFacing: true,
                 },
-              } as any);
+              });
             }
           }
         });

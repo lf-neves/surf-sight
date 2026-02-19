@@ -41,7 +41,7 @@ function SignupPageContent() {
         }
         router.push('/');
       }
-    } catch (err) {
+    } catch {
       // Error is handled by Apollo
     }
   };
@@ -97,7 +97,7 @@ function SignupPageContent() {
         disabled={loading}
         minLength={6}
         rules={{
-          validate: (value: string, formValues: any) => {
+          validate: (value: string, formValues: { password?: string }) => {
             if (value !== formValues.password) {
               return 'Passwords do not match';
             }

@@ -1,5 +1,5 @@
 // Cache for SSM parameters fetched at runtime
-let ssmCache: {
+const ssmCache: {
   databaseUrl?: string;
   jwtSecret?: string;
   openaiApiKey?: string;

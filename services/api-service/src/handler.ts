@@ -84,7 +84,7 @@ async function ensureEnvInitialized() {
       try {
         logger.info('[INIT] Fetching DATABASE_URL from SSM Parameter Store...');
         const { getEnvAsync } = await import('./env');
-        const env = await getEnvAsync(); // This will fetch from SSM and set process.env.DATABASE_URL
+        await getEnvAsync(); // Fetches from SSM and sets process.env.DATABASE_URL
         
         if (process.env.DATABASE_URL) {
           logger.info('[INIT] ✅ Successfully initialized DATABASE_URL from SSM');

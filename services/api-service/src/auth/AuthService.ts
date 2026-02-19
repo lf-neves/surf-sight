@@ -70,7 +70,7 @@ export class AuthService {
     });
 
     // Remove password from user object before returning
-    const { password, ...userWithoutPassword } = user;
+    const { password: _password, ...userWithoutPassword } = user;
 
     return {
       token,
@@ -120,7 +120,7 @@ export class AuthService {
     });
 
     // Remove password from user object before returning
-    const { password, ...userWithoutPassword } = user;
+    const { password: _password, ...userWithoutPassword } = user;
 
     return {
       token,

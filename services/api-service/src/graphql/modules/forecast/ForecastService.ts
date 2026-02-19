@@ -1,6 +1,6 @@
 import { drizzleDb, forecasts, Forecast } from '@surf-sight/database';
 import { logger } from '@surf-sight/core';
-import { eq, asc, desc, gte, lte, and } from 'drizzle-orm';
+import { eq, asc, desc, gte, lte, and, type SQLWrapper } from 'drizzle-orm';
 
 export class ForecastService {
   constructor(private db: typeof drizzleDb) {}
@@ -12,7 +12,7 @@ export class ForecastService {
     });
     
     const now = new Date();
-    let whereConditions: any[] = [eq(forecasts.spotId, spotId)];
+    const whereConditions: (SQLWrapper | undefined)[] = [eq(forecasts.spotId, spotId)];
 
     if (nextHours) {
       // Include forecasts from the past 24h so seeded/demo data and recent points show in charts

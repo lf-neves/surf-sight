@@ -35,7 +35,7 @@ if (typeof window !== 'undefined' && initialState.token) {
       initialState.user = JSON.parse(userStr);
       initialState.isAuthenticated = true;
     }
-  } catch (error) {
+  } catch {
     // Invalid user data, clear it
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -85,7 +85,7 @@ export const loginAsync = createAsyncThunk(
       }
 
       return data.data.login;
-    } catch (error) {
+    } catch {
       // Return generic error message for network errors too
       return rejectWithValue(
         "Something went wrong. We're investigating the problem and will reach out to you when we solve it."
@@ -136,7 +136,7 @@ export const signupAsync = createAsyncThunk(
       }
 
       return data.data.signup;
-    } catch (error) {
+    } catch {
       // Return generic error message for network errors too
       return rejectWithValue(
         "Something went wrong. We're investigating the problem and will reach out to you when we solve it."

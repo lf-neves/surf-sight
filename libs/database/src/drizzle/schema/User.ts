@@ -1,6 +1,5 @@
 import { pgTable, uuid, varchar, timestamp, index } from 'drizzle-orm/pg-core';
 import { userSkillLevelEnum } from './enums';
-import { favoriteSpots } from './FavoriteSpot';
 
 export const users = pgTable(
   'users',
@@ -14,7 +13,10 @@ export const users = pgTable(
     resetToken: varchar('reset_token', { length: 255 }),
     resetTokenExpiry: timestamp('reset_token_expiry'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdate(() => new Date()),
+    updatedAt: timestamp('updated_at')
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   },
   (table) => ({
     emailIdx: index('users_email_idx').on(table.email),

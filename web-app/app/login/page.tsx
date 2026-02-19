@@ -38,7 +38,7 @@ function LoginPageContent() {
         }
         router.push('/');
       }
-    } catch (err) {
+    } catch {
       // Error is handled by Apollo
     }
   };

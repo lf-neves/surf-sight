@@ -1,22 +1,18 @@
 'use client';
 
 import { motion } from 'motion/react';
-import { Sparkles, User, Wind } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useAppSelector } from '@/lib/store/hooks';
 import { useSpotWithForecastQuery } from '@/lib/graphql/generated/apollo-graphql-hooks';
-import {
-  parseForecastRaw,
-  windSpeedToKmh,
-  degreesToDirection,
-} from '@/lib/utils/forecast';
+import { parseForecastRaw, windSpeedToKmh } from '@/lib/utils/forecast';
 
 export function RecommendationsCard() {
   const [activeTab, setActiveTab] = useState<'board' | 'wetsuit' | 'skill'>(
     'board'
   );
   const selectedSpot = useAppSelector((state) => state.spot.selectedSpot);
-  
+
   const { data } = useSpotWithForecastQuery({
     variables: { id: selectedSpot?.id || '' },
     skip: !selectedSpot?.id,
